@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda Financeira Anual</title>
+  <title>Agenda Financeira & Investimentos</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -12,12 +12,21 @@
       --bg: #f8fafc;
       --card: #ffffff;
       --text: #1e293b;
+      --accent: #8b5cf6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-    .container { max-width: 900px; width: 100%; }
-    h1 { margin-bottom: 20px; text-align: center; color: var(--primary); }
+    .container { max-width: 950px; width: 100%; }
+    h1 { margin-bottom: 15px; text-align: center; color: var(--primary); }
+
+    /* Navegação por Abas */
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 12px; background: #e2e8f0; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+    .tab-btn.active { background: var(--primary); color: white; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
     /* Dashboard Cards */
     .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -28,12 +37,16 @@
     .gastos { color: var(--danger); }
     .saldo { color: var(--primary); }
 
-    /* Formulário */
+    /* Formulários e Inputs */
     .form-container { background: var(--card); padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-size: 0.8rem; margin-bottom: 4px; font-weight: 600; color: #475569; }
     input, select, button { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; }
     button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
     button:hover { background: #1d4ed8; }
+    .btn-secondary { background: var(--accent); }
+    .btn-secondary:hover { background: #7c3aed; }
 
     /* Controles e Tabela */
     .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -41,99 +54,256 @@
     th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
     th { background: #f1f5f9; color: #475569; }
     .btn-delete { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-    .btn-delete:hover { background: #b91c1c; }
+
+    /* Modal / Guia de Investimentos */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; padding: 20px; z-index: 100; }
+    .modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; }
+    .guide-section { margin-bottom: 20px; }
+    .guide-section h4 { color: var(--primary); margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
+    .guide-section ul { margin-left: 20px; line-height: 1.6; }
+
+    /* Resumo da Simulação */
+    .sim-result { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
+    .sim-result p { margin-bottom: 8px; font-size: 1.05rem; }
+    .note-text { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-style: italic; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Agenda Financeira Anual</h1>
+    <h1>Agenda Financeira & Investimentos</h1>
 
-    <!-- Seleção de Ano -->
-    <div class="controls">
-      <label for="filtroAno"><strong>Visualizar Ano:</strong></label>
-      <select id="filtroAno" onchange="renderizar()"></select>
+    <!-- Abas de Navegação -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="mudarAba('agenda')">Agenda de Gastos</button>
+      <button class="tab-btn" onclick="mudarAba('investimentos')">Análise de Investimentos</button>
     </div>
 
-    <!-- Dashboard com resumo do ano -->
-    <div class="dashboard">
-      <div class="card">
-        <h3>Total de Ganhos</h3>
-        <p id="totalGanhos" class="ganhos">R$ 0,00</p>
+    <!-- ABA 1: AGENDA FINANCEIRA -->
+    <div id="aba-agenda" class="tab-content active">
+      <div class="controls">
+        <label for="filtroAno"><strong>Visualizar Ano:</strong></label>
+        <select id="filtroAno" onchange="renderizar()"></select>
       </div>
-      <div class="card">
-        <h3>Total de Gastos</h3>
-        <p id="totalGastos" class="gastos">R$ 0,00</p>
-      </div>
-      <div class="card">
-        <h3>Saldo Final do Ano</h3>
-        <p id="saldoFinal" class="saldo">R$ 0,00</p>
-      </div>
-    </div>
 
-    <!-- Formulário de Cadastro -->
-    <div class="form-container">
-      <h3>Novo Registro</h3>
-      <form id="formFinancas" onsubmit="adicionarRegistro(event)">
-        <div class="form-grid">
-          <input type="text" id="descricao" placeholder="Descrição (ex: Salário, Aluguel)" required>
-          <input type="number" id="valor" step="0.01" placeholder="Valor (R$)" required>
-          <select id="tipo" required>
-            <option value="ganho">Ganho (+)</option>
-            <option value="gasto">Gasto (-)</option>
-          </select>
-          <select id="mes" required>
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-          </select>
-          <input type="number" id="ano" placeholder="Ano" required>
-          <button type="submit">Adicionar</button>
+      <div class="dashboard">
+        <div class="card">
+          <h3>Total de Ganhos</h3>
+          <p id="totalGanhos" class="ganhos">R$ 0,00</p>
         </div>
-      </form>
+        <div class="card">
+          <h3>Total de Gastos</h3>
+          <p id="totalGastos" class="gastos">R$ 0,00</p>
+        </div>
+        <div class="card">
+          <h3>Saldo Final do Ano</h3>
+          <p id="saldoFinal" class="saldo">R$ 0,00</p>
+        </div>
+      </div>
+
+      <div class="form-container">
+        <h3>Novo Registro</h3>
+        <form id="formFinancas" onsubmit="adicionarRegistro(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Descrição</label>
+              <input type="text" id="descricao" placeholder="Ex: Salário, Aluguel" required>
+            </div>
+            <div class="form-group">
+              <label>Valor (R$)</label>
+              <input type="number" id="valor" step="0.01" placeholder="0,00" required>
+            </div>
+            <div class="form-group">
+              <label>Tipo</label>
+              <select id="tipo" required>
+                <option value="ganho">Ganho (+)</option>
+                <option value="gasto">Gasto (-)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Mês</label>
+              <select id="mes" required>
+                <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+                <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+                <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+                <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Ano</label>
+              <input type="number" id="ano" placeholder="Ano" required>
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+              <button type="submit">Adicionar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Descrição</th>
+            <th>Tipo</th>
+            <th>Valor</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaCorpo"></tbody>
+      </table>
     </div>
 
-    <!-- Tabela de Registros -->
-    <table>
-      <thead>
-        <tr>
-          <th>Mês</th>
-          <th>Descrição</th>
-          <th>Tipo</th>
-          <th>Valor</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaCorpo"></tbody>
-    </table>
+    <!-- ABA 2: ANÁLISE DE INVESTIMENTOS -->
+    <div id="aba-investimentos" class="tab-content">
+      <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button class="btn-secondary" onclick="abrirModalGuia()">📘 Guia de Tipos e Lugares para Investir</button>
+      </div>
+
+      <!-- Simulador de Investimentos Avançado -->
+      <div class="form-container">
+        <h3>Simulador Multi-Investimentos</h3>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Compare diferentes modalidades de investimento e tipos de juros.</p>
+        
+        <form id="formSimulador" onsubmit="simularInvestimento(event)">
+          <div class="form-grid">
+            
+            <div class="form-group">
+              <label>Categoria / Tipo:</label>
+              <select id="simCategoria" onchange="atualizarTaxaSugerida()">
+                <optgroup label="Renda Fixa">
+                  <option value="tesouro" data-taxa="10.5">Tesouro Selic / CDB 100% CDI (~10.5% a.a.)</option>
+                  <option value="lci" data-taxa="9.0">LCI/LCA Isento de IR (~9.0% a.a.)</option>
+                  <option value="poupanca" data-taxa="6.17">Poupança (~6.17% a.a.)</option>
+                </optgroup>
+                <optgroup label="Renda Variável (Estimativa Média)">
+                  <option value="fiis" data-taxa="11.0">Fundos Imobiliários / FIIs (~11.0% a.a.)</option>
+                  <option value="acoes" data-taxa="13.0">Ações / Ibovespa Médio (~13.0% a.a.)</option>
+                  <option value="cripto" data-taxa="25.0">Criptomoedas / Alto Risco (~25.0% a.a.)</option>
+                </optgroup>
+                <optgroup label="Personalizado">
+                  <option value="custom" data-taxa="10.0">Definir Taxa Manualmente</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Regime de Juros:</label>
+              <select id="simTipoJuros">
+                <option value="compostos">Juros Compostos (Padrão Real)</option>
+                <option value="simples">Juros Simples (Rendimento Fixo)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Aporte Inicial (R$):</label>
+              <input type="number" id="simInicial" step="0.01" placeholder="Ex: 1000" required>
+            </div>
+
+            <div class="form-group">
+              <label>Aporte Mensal (R$):</label>
+              <input type="number" id="simMensal" step="0.01" placeholder="Ex: 200" value="0">
+            </div>
+
+            <div class="form-group">
+              <label>Taxa de Juros Anual (%):</label>
+              <input type="number" id="simTaxa" step="0.1" placeholder="Ex: 10.5" value="10.5" required>
+            </div>
+
+            <div class="form-group">
+              <label>Prazo (Anos):</label>
+              <input type="number" id="simAnos" placeholder="Ex: 5" required>
+            </div>
+
+            <div class="form-group" style="justify-content: flex-end; grid-column: 1 / -1;">
+              <button type="submit" style="width: 100%;">Executar Simulação</button>
+            </div>
+          </div>
+        </form>
+
+        <div id="resultadoSimulacao" class="sim-result">
+          <p><strong>Modalidade Escolhida:</strong> <span id="resTipoInvestimento">-</span> (<span id="resModoJuros">-</span>)</p>
+          <p><strong>Valor Total Investido (Seu Bolso):</strong> <span id="resInvestido">R$ 0,00</span></p>
+          <p><strong>Total em Juros / Rendimento:</strong> <span id="resJuros" class="ganhos">R$ 0,00</span></p>
+          <p><strong>Valor Total Acumulado:</strong> <span id="resTotal" class="saldo">R$ 0,00</span></p>
+          <p class="note-text">* Atenção: Em Renda Variável as taxas são estimativas históricas e os ganhos futuros não são garantidos.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GUIA DE INVESTIMENTOS -->
+  <div id="modalGuia" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Guia Prático de Investimentos</h2>
+        <button class="close-btn" onclick="fecharModalGuia()">&times;</button>
+      </div>
+
+      <div class="guide-section">
+        <h4>1. Tipos de Investimentos</h4>
+        <ul>
+          <li><strong>Renda Fixa (Baixo Risco):</strong>
+            <ul>
+              <li><strong>Tesouro Direto:</strong> Empréstimo de dinheiro para o governo. Seguro e ideal para reserva de emergência (Tesouro Selic).</li>
+              <li><strong>CDBs:</strong> Empréstimo para bancos. Busque os que rendem no mínimo 100% do CDI. Protegidos pelo FGC até R$ 250 mil.</li>
+              <li><strong>LCI / LCA:</strong> Títulos do setor imobiliário/agronegócio. Isentos de Imposto de Renda.</li>
+            </ul>
+          </li>
+          <li><strong>Renda Variável (Médio/Alto Risco):</strong>
+            <ul>
+              <li><strong>Ações:</strong> Torne-se sócio de grandes empresas. Potencial de valorização e dividendos.</li>
+              <li><strong>Fundos Imobiliários (FIIs):</strong> Invista em imóveis com pouco dinheiro e receba "aluguéis" mensais isentos de IR.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h4>2. Onde Investir (Lugares Recomendados)</h4>
+        <ul>
+          <li><strong>Bancos Digitais (Fácil e para Iniciantes):</strong> Nubank, Banco Inter, C6 Bank, Itaú (íon). Oferecem CDBs com liquidez diária e Tesouro Direto direto no app.</li>
+          <li><strong>Corretoras Especializadas (Maior Variedade):</strong> XP Investimentos, BTG Pactual, NuInvest, Rico. Ideal para quem quer investir em Ações, FIIs e opções mais avançadas de Renda Fixa.</li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h4>3. Dica Financeira Básica</h4>
+        <p>Antes de investir em Renda Variável, monte uma <strong>Reserva de Emergência</strong> equivalente a 3 a 6 meses do seu custo de vida em uma aplicação de Renda Fixa com liquidez diária (saque imediato).</p>
+      </div>
+    </div>
   </div>
 
   <script>
-    // Recupera dados do localStorage ou inicia lista vazia
+    // Gerenciamento de Abas
+    function mudarAba(aba) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      if(aba === 'agenda') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('aba-agenda').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('aba-investimentos').classList.add('active');
+      }
+    }
+
+    // Modal Guia
+    function abrirModalGuia() { document.getElementById('modalGuia').style.display = 'flex'; }
+    function fecharModalGuia() { document.getElementById('modalGuia').style.display = 'none'; }
+
+    // --- LÓGICA DA AGENDA FINANCEIRA ---
     let transacoes = JSON.parse(localStorage.getItem('transacoes_financeiras')) || [];
-
-    const mesesNomes = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
-
-    // Configura o ano atual nos inputs ao carregar
+    const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const anoAtual = new Date().getFullYear();
     document.getElementById('ano').value = anoAtual;
 
     function inicializarFiltroAnos() {
       const selectFiltro = document.getElementById('filtroAno');
       const anos = [...new Set(transacoes.map(t => t.ano))];
-      
       if (!anos.includes(anoAtual)) anos.push(anoAtual);
       anos.sort((a, b) => b - a);
 
@@ -148,7 +318,6 @@
 
     function adicionarRegistro(e) {
       e.preventDefault();
-
       const novaTransacao = {
         id: Date.now(),
         descricao: document.getElementById('descricao').value,
@@ -160,12 +329,9 @@
 
       transacoes.push(novaTransacao);
       salvarDados();
-      
-      // Limpa campos do formulário
       document.getElementById('descricao').value = '';
       document.getElementById('valor').value = '';
 
-      // Atualiza o filtro se for um ano novo
       inicializarFiltroAnos();
       document.getElementById('filtroAno').value = novaTransacao.ano;
       renderizar();
@@ -191,47 +357,101 @@
       tabelaCorpo.innerHTML = '';
 
       const transacoesFiltradas = transacoes.filter(t => t.ano === anoSelecionado);
-      
-      // Ordena por mês
       transacoesFiltradas.sort((a, b) => a.mes - b.mes);
 
       let totalGanhos = 0;
       let totalGastos = 0;
 
       transacoesFiltradas.forEach(t => {
-        if (t.tipo === 'ganho') {
-          totalGanhos += t.valor;
-        } else {
-          totalGastos += t.valor;
-        }
+        if (t.tipo === 'ganho') totalGanhos += t.valor;
+        else totalGastos += t.valor;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${mesesNomes[t.mes - 1]}</td>
           <td>${t.descricao}</td>
-          <td style="color: ${t.tipo === 'ganho' ? 'var(--success)' : 'var(--danger)'}">
-            ${t.tipo === 'ganho' ? 'Ganho' : 'Gasto'}
-          </td>
+          <td style="color: ${t.tipo === 'ganho' ? 'var(--success)' : 'var(--danger)'}">${t.tipo === 'ganho' ? 'Ganho' : 'Gasto'}</td>
           <td>${formatarMoeda(t.valor)}</td>
-          <td>
-            <button class="btn-delete" onclick="removerRegistro(${t.id})">Excluir</button>
-          </td>
+          <td><button class="btn-delete" onclick="removerRegistro(${t.id})">Excluir</button></td>
         `;
         tabelaCorpo.appendChild(tr);
       });
 
       const saldoFinal = totalGanhos - totalGastos;
-
-      // Atualiza o Dashboard
       document.getElementById('totalGanhos').textContent = formatarMoeda(totalGanhos);
       document.getElementById('totalGastos').textContent = formatarMoeda(totalGastos);
       document.getElementById('saldoFinal').textContent = formatarMoeda(saldoFinal);
-      
-      // Cor dinâmica do saldo final
       document.getElementById('saldoFinal').style.color = saldoFinal >= 0 ? 'var(--success)' : 'var(--danger)';
     }
 
-    // Inicialização do aplicativo
+    // --- LÓGICA DO SIMULADOR DE INVESTIMENTOS ---
+    function atualizarTaxaSugerida() {
+      const selectCategoria = document.getElementById('simCategoria');
+      const opcaoSelecionada = selectCategoria.options[selectCategoria.selectedIndex];
+      const taxa = opcaoSelecionada.getAttribute('data-taxa');
+      
+      if (taxa) {
+        document.getElementById('simTaxa').value = taxa;
+      }
+    }
+
+    function simularInvestimento(e) {
+      e.preventDefault();
+
+      const categoriaSelect = document.getElementById('simCategoria');
+      const nomeCategoria = categoriaSelect.options[categoriaSelect.selectedIndex].text;
+      const tipoJuros = document.getElementById('simTipoJuros').value;
+
+      const inicial = parseFloat(document.getElementById('simInicial').value) || 0;
+      const mensal = parseFloat(document.getElementById('simMensal').value) || 0;
+      const taxaAnual = parseFloat(document.getElementById('simTaxa').value) || 0;
+      const anos = parseInt(document.getElementById('simAnos').value) || 0;
+
+      const meses = anos * 12;
+      let montante = 0;
+      let totalInvestido = inicial + (mensal * meses);
+      let totalJuros = 0;
+
+      if (tipoJuros === 'compostos') {
+        // Cálculo de Juros Compostos
+        const taxaMensal = Math.pow(1 + (taxaAnual / 100), 1 / 12) - 1;
+        montante = inicial;
+
+        for (let i = 0; i < meses; i++) {
+          montante += mensal;
+          montante *= (1 + taxaMensal);
+        }
+        totalJuros = montante - totalInvestido;
+
+      } else {
+        // Cálculo de Juros Simples
+        const taxaAnualDecimal = taxaAnual / 100;
+        
+        // Juros do montante inicial ao longo dos anos
+        const jurosInicial = inicial * taxaAnualDecimal * anos;
+        
+        // Juros dos aportes mensais (cada aporte rende proporcionalmente ao tempo restante)
+        let jurosMensais = 0;
+        for (let i = 1; i <= meses; i++) {
+          const tempoRestanteEmAnos = (meses - i + 1) / 12;
+          jurosMensais += mensal * taxaAnualDecimal * tempoRestanteEmAnos;
+        }
+
+        totalJuros = jurosInicial + jurosMensais;
+        montante = totalInvestido + totalJuros;
+      }
+
+      // Exibir Resultados
+      document.getElementById('resTipoInvestimento').textContent = nomeCategoria;
+      document.getElementById('resModoJuros').textContent = tipoJuros === 'compostos' ? 'Juros Compostos' : 'Juros Simples';
+      document.getElementById('resInvestido').textContent = formatarMoeda(totalInvestido);
+      document.getElementById('resJuros').textContent = formatarMoeda(totalJuros);
+      document.getElementById('resTotal').textContent = formatarMoeda(montante);
+
+      document.getElementById('resultadoSimulacao').style.display = 'block';
+    }
+
+    // Inicialização
     inicializarFiltroAnos();
     renderizar();
   </script>

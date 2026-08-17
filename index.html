@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda Financeira & Investimentos</title>
+  <title>Agenda Financeira, Perdas & Investimentos</title>
   <style>
     :root {
       --primary: #2563eb;
       --success: #16a34a;
       --danger: #dc2626;
+      --warning: #d97706;
       --bg: #f8fafc;
       --card: #ffffff;
       --text: #1e293b;
@@ -29,12 +30,13 @@
     .tab-content.active { display: block; }
 
     /* Dashboard Cards */
-    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
     .card { background: var(--card); padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
-    .card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
-    .card p { font-size: 1.4rem; font-weight: bold; }
+    .card h3 { font-size: 0.85rem; color: #64748b; margin-bottom: 8px; }
+    .card p { font-size: 1.3rem; font-weight: bold; }
     .ganhos { color: var(--success); }
     .gastos { color: var(--danger); }
+    .perdas { color: var(--warning); }
     .saldo { color: var(--primary); }
 
     /* Formulários e Inputs */
@@ -77,7 +79,7 @@
 
     <!-- Abas de Navegação -->
     <div class="tabs">
-      <button class="tab-btn active" onclick="mudarAba('agenda')">Agenda de Gastos</button>
+      <button class="tab-btn active" onclick="mudarAba('agenda')">Agenda de Gastos & Perdas</button>
       <button class="tab-btn" onclick="mudarAba('investimentos')">Análise de Investimentos</button>
     </div>
 
@@ -98,6 +100,10 @@
           <p id="totalGastos" class="gastos">R$ 0,00</p>
         </div>
         <div class="card">
+          <h3>Total de Perdas</h3>
+          <p id="totalPerdas" class="perdas">R$ 0,00</p>
+        </div>
+        <div class="card">
           <h3>Saldo Final do Ano</h3>
           <p id="saldoFinal" class="saldo">R$ 0,00</p>
         </div>
@@ -109,7 +115,7 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Descrição</label>
-              <input type="text" id="descricao" placeholder="Ex: Salário, Aluguel" required>
+              <input type="text" id="descricao" placeholder="Ex: Salário, Multa, Queda Ações" required>
             </div>
             <div class="form-group">
               <label>Valor (R$)</label>
@@ -120,6 +126,7 @@
               <select id="tipo" required>
                 <option value="ganho">Ganho (+)</option>
                 <option value="gasto">Gasto (-)</option>
+                <option value="perda">Perda / Prejuízo (-)</option>
               </select>
             </div>
             <div class="form-group">
@@ -164,8 +171,8 @@
 
       <!-- Simulador de Investimentos Avançado -->
       <div class="form-container">
-        <h3>Simulador Multi-Investimentos</h3>
-        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Compare diferentes modalidades de investimento e tipos de juros.</p>
+        <h3>Simulador Multi-Investimentos (Com Opção de Perda)</h3>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Simule rendimentos positivos ou cenários de desvalorização (taxas negativas).</p>
         
         <form id="formSimulador" onsubmit="simularInvestimento(event)">
           <div class="form-grid">
@@ -182,6 +189,10 @@
                   <option value="fiis" data-taxa="11.0">Fundos Imobiliários / FIIs (~11.0% a.a.)</option>
                   <option value="acoes" data-taxa="13.0">Ações / Ibovespa Médio (~13.0% a.a.)</option>
                   <option value="cripto" data-taxa="25.0">Criptomoedas / Alto Risco (~25.0% a.a.)</option>
+                </optgroup>
+                <optgroup label="Cenários de Perda / Risco">
+                  <option value="queda_leve" data-taxa="-5.0">Desvalorização Leve (-5.0% a.a.)</option>
+                  <option value="queda_forte" data-taxa="-20.0">Desvalorização Severa (-20.0% a.a.)</option>
                 </optgroup>
                 <optgroup label="Personalizado">
                   <option value="custom" data-taxa="10.0">Definir Taxa Manualmente</option>
@@ -208,8 +219,8 @@
             </div>
 
             <div class="form-group">
-              <label>Taxa de Juros Anual (%):</label>
-              <input type="number" id="simTaxa" step="0.1" placeholder="Ex: 10.5" value="10.5" required>
+              <label>Taxa Anual (%) - Positiva ou Negativa:</label>
+              <input type="number" id="simTaxa" step="0.1" placeholder="Ex: 10.5 ou -5.0" value="10.5" required>
             </div>
 
             <div class="form-group">
@@ -226,9 +237,9 @@
         <div id="resultadoSimulacao" class="sim-result">
           <p><strong>Modalidade Escolhida:</strong> <span id="resTipoInvestimento">-</span> (<span id="resModoJuros">-</span>)</p>
           <p><strong>Valor Total Investido (Seu Bolso):</strong> <span id="resInvestido">R$ 0,00</span></p>
-          <p><strong>Total em Juros / Rendimento:</strong> <span id="resJuros" class="ganhos">R$ 0,00</span></p>
+          <p><strong>Resultado (Rendimento / Perda):</strong> <span id="resJuros">R$ 0,00</span></p>
           <p><strong>Valor Total Acumulado:</strong> <span id="resTotal" class="saldo">R$ 0,00</span></p>
-          <p class="note-text">* Atenção: Em Renda Variável as taxas são estimativas históricas e os ganhos futuros não são garantidos.</p>
+          <p class="note-text">* Atenção: Em Renda Variável as taxas são estimativas históricas e os ganhos ou perdas futuros não são garantidos.</p>
         </div>
       </div>
     </div>
@@ -254,7 +265,7 @@
           </li>
           <li><strong>Renda Variável (Médio/Alto Risco):</strong>
             <ul>
-              <li><strong>Ações:</strong> Torne-se sócio de grandes empresas. Potencial de valorização e dividendos.</li>
+              <li><strong>Ações:</strong> Torne-se sócio de grandes empresas. Potencial de valorização e dividendos, mas sujeita a perdas com oscilações do mercado.</li>
               <li><strong>Fundos Imobiliários (FIIs):</strong> Invista em imóveis com pouco dinheiro e receba "aluguéis" mensais isentos de IR.</li>
             </ul>
           </li>
@@ -361,25 +372,39 @@
 
       let totalGanhos = 0;
       let totalGastos = 0;
+      let totalPerdas = 0;
 
       transacoesFiltradas.forEach(t => {
-        if (t.tipo === 'ganho') totalGanhos += t.valor;
-        else totalGastos += t.valor;
+        let corTipo = 'var(--success)';
+        let nomeTipo = 'Ganho';
+
+        if (t.tipo === 'ganho') {
+          totalGanhos += t.valor;
+        } else if (t.tipo === 'gasto') {
+          totalGastos += t.valor;
+          corTipo = 'var(--danger)';
+          nomeTipo = 'Gasto';
+        } else if (t.tipo === 'perda') {
+          totalPerdas += t.valor;
+          corTipo = 'var(--warning)';
+          nomeTipo = 'Perda';
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${mesesNomes[t.mes - 1]}</td>
           <td>${t.descricao}</td>
-          <td style="color: ${t.tipo === 'ganho' ? 'var(--success)' : 'var(--danger)'}">${t.tipo === 'ganho' ? 'Ganho' : 'Gasto'}</td>
+          <td style="color: ${corTipo}">${nomeTipo}</td>
           <td>${formatarMoeda(t.valor)}</td>
           <td><button class="btn-delete" onclick="removerRegistro(${t.id})">Excluir</button></td>
         `;
         tabelaCorpo.appendChild(tr);
       });
 
-      const saldoFinal = totalGanhos - totalGastos;
+      const saldoFinal = totalGanhos - (totalGastos + totalPerdas);
       document.getElementById('totalGanhos').textContent = formatarMoeda(totalGanhos);
       document.getElementById('totalGastos').textContent = formatarMoeda(totalGastos);
+      document.getElementById('totalPerdas').textContent = formatarMoeda(totalPerdas);
       document.getElementById('saldoFinal').textContent = formatarMoeda(saldoFinal);
       document.getElementById('saldoFinal').style.color = saldoFinal >= 0 ? 'var(--success)' : 'var(--danger)';
     }
@@ -410,42 +435,49 @@
       const meses = anos * 12;
       let montante = 0;
       let totalInvestido = inicial + (mensal * meses);
-      let totalJuros = 0;
+      let totalResultado = 0;
 
       if (tipoJuros === 'compostos') {
-        // Cálculo de Juros Compostos
-        const taxaMensal = Math.pow(1 + (taxaAnual / 100), 1 / 12) - 1;
+        const taxaDecimal = taxaAnual / 100;
+        let taxaMensal;
+        
+        if (taxaAnual < 0) {
+          taxaMensal = - (1 - Math.pow(1 + taxaDecimal, 1 / 12));
+        } else {
+          taxaMensal = Math.pow(1 + taxaDecimal, 1 / 12) - 1;
+        }
+
         montante = inicial;
 
         for (let i = 0; i < meses; i++) {
           montante += mensal;
           montante *= (1 + taxaMensal);
         }
-        totalJuros = montante - totalInvestido;
+        totalResultado = montante - totalInvestido;
 
       } else {
-        // Cálculo de Juros Simples
         const taxaAnualDecimal = taxaAnual / 100;
-        
-        // Juros do montante inicial ao longo dos anos
         const jurosInicial = inicial * taxaAnualDecimal * anos;
         
-        // Juros dos aportes mensais (cada aporte rende proporcionalmente ao tempo restante)
         let jurosMensais = 0;
         for (let i = 1; i <= meses; i++) {
           const tempoRestanteEmAnos = (meses - i + 1) / 12;
           jurosMensais += mensal * taxaAnualDecimal * tempoRestanteEmAnos;
         }
 
-        totalJuros = jurosInicial + jurosMensais;
-        montante = totalInvestido + totalJuros;
+        totalResultado = jurosInicial + jurosMensais;
+        montante = totalInvestido + totalResultado;
       }
 
       // Exibir Resultados
       document.getElementById('resTipoInvestimento').textContent = nomeCategoria;
       document.getElementById('resModoJuros').textContent = tipoJuros === 'compostos' ? 'Juros Compostos' : 'Juros Simples';
       document.getElementById('resInvestido').textContent = formatarMoeda(totalInvestido);
-      document.getElementById('resJuros').textContent = formatarMoeda(totalJuros);
+      
+      const elJuros = document.getElementById('resJuros');
+      elJuros.textContent = formatarMoeda(totalResultado);
+      elJuros.className = totalResultado >= 0 ? 'ganhos' : 'perdas';
+
       document.getElementById('resTotal').textContent = formatarMoeda(montante);
 
       document.getElementById('resultadoSimulacao').style.display = 'block';

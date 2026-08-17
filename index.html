@@ -1,1 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolsa de Valores em Tempo Real</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #334155;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      color: #38bdf8;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .pulse {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #22c55e;
+      margin-right: 6px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #334155;
+      transition: border-color 0.2s;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .symbol {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .company {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .price-box {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .change {
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .up {
+      color: #4ade80;
+      background-color: rgba(74, 222, 128, 0.1);
+    }
+
+    .down {
+      color: #f87171;
+      background-color: rgba(248, 113, 113, 0.1);
+    }
+
+    .flash-green {
+      animation: flashGreen 0.4s ease-out;
+    }
+
+    .flash-red {
+      animation: flashRed 0.4s ease-out;
+    }
+
+    @keyframes flashGreen {
+      0% { background-color: rgba(74, 222, 128, 0.3); }
+      100% { background-color: transparent; }
+    }
+
+    @keyframes flashRed {
+      0% { background-color: rgba(248, 113, 113, 0.3); }
+      100% { background-color: transparent; }
+    }
+
+    .details {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📈 B3 - Mercado ao Vivo</h1>
+    <div class="status">
+      <span class="pulse"></span>Atualizando a cada 1s | <span id="clock">00:00:00</span>
+    </div>
+  </header>
+
+  <div class="grid" id="stock-grid"></div>
+
+  <script>
+    // Lista de ações iniciais
+    const stocks = [
+      { symbol: 'PETR4', company: 'Petrobras', price: 38.50, initialPrice: 38.50 },
+      { symbol: 'VALE3', company: 'Vale', price: 62.10, initialPrice: 62.10 },
+      { symbol: 'ITUB4', company: 'Itaú Unibanco', price: 34.20, initialPrice: 34.20 },
+      { symbol: 'BBDC4', company: 'Bradesco', price: 14.80, initialPrice: 14.80 },
+      { symbol: 'WEGE3', company: 'WEG', price: 41.00, initialPrice: 41.00 },
+      { symbol: 'MGLU3', company: 'Magazine Luiza', price: 12.30, initialPrice: 12.30 }
+    ];
+
+    // Inicializa os cards na página
+    function renderCards() {
+      const grid = document.getElementById('stock-grid');
+      grid.innerHTML = '';
+
+      stocks.forEach(stock => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card-${stock.symbol}`;
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div class="symbol">${stock.symbol}</div>
+              <div class="company">${stock.company}</div>
+            </div>
+          </div>
+          <div class="price-box">
+            <span class="price" id="price-${stock.symbol}">R$ ${stock.price.toFixed(2)}</span>
+            <span class="change up" id="change-${stock.symbol}">0.00%</span>
+          </div>
+          <div class="details">
+            <span>Mín: <strong id="min-${stock.symbol}">R$ ${stock.price.toFixed(2)}</strong></span>
+            <span>Máx: <strong id="max-${stock.symbol}">R$ ${stock.price.toFixed(2)}</strong></span>
+          </div>
+        `;
+        
+        // Guarda histórico de máxima e mínima
+        stock.min = stock.price;
+        stock.max = stock.price;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // Função para simular flutuação de preço
+    function updateStocks() {
+      stocks.forEach(stock => {
+        // Variação percentual aleatória entre -0.8% e +0.8%
+        const deltaPercent = (Math.random() - 0.49) * 1.6;
+        const oldPrice = stock.price;
+        const newPrice = oldPrice * (1 + deltaPercent / 100);
+        
+        stock.price = Math.max(0.01, newPrice); // impede preço negativo
+
+        // Atualiza Máxima e Mínima
+        if (stock.price > stock.max) stock.max = stock.price;
+        if (stock.price < stock.min) stock.min = stock.price;
+
+        // Calcula variação total do dia em relação ao preço inicial
+        const totalChange = ((stock.price - stock.initialPrice) / stock.initialPrice) * 100;
+
+        // Elementos DOM
+        const card = document.getElementById(`card-${stock.symbol}`);
+        const priceEl = document.getElementById(`price-${stock.symbol}`);
+        const changeEl = document.getElementById(`change-${stock.symbol}`);
+        const minEl = document.getElementById(`min-${stock.symbol}`);
+        const maxEl = document.getElementById(`max-${stock.symbol}`);
+
+        // Atualiza textos
+        priceEl.textContent = `R$ ${stock.price.toFixed(2)}`;
+        changeEl.textContent = `${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)}%`;
+        minEl.textContent = `R$ ${stock.min.toFixed(2)}`;
+        maxEl.textContent = `R$ ${stock.max.toFixed(2)}`;
+
+        // Atualiza classe de cor da variação
+        changeEl.className = `change ${totalChange >= 0 ? 'up' : 'down'}`;
+
+        // Efeito visual de brilho no card (verde subiu / vermelho caiu)
+        card.classList.remove('flash-green', 'flash-red');
+        void card.offsetWidth; // Força reflow no navegador para reiniciar a animação
+        card.classList.add(stock.price >= oldPrice ? 'flash-green' : 'flash-red');
+      });
+
+      // Atualiza o relógio no topo
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+    }
+
+    // Inicialização do painel
+    renderCards();
+    updateStocks();
+
+    // Executa a função updateStocks a cada 1000 milissegundos (1 segundo)
+    setInterval(updateStocks, 1000);
+  </script>
+</body>
+</html>

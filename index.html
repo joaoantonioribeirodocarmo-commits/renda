@@ -3,489 +3,1724 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda Financeira, Perdas & Investimentos</title>
-  <style>
-    :root {
-      --primary: #2563eb;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --warning: #d97706;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #1e293b;
-      --accent: #8b5cf6;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-    .container { max-width: 950px; width: 100%; }
-    h1 { margin-bottom: 15px; text-align: center; color: var(--primary); }
-
-    /* Navegação por Abas */
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 12px; background: #e2e8f0; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; transition: 0.2s; }
-    .tab-btn.active { background: var(--primary); color: white; }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* Dashboard Cards */
-    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-    .card { background: var(--card); padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
-    .card h3 { font-size: 0.85rem; color: #64748b; margin-bottom: 8px; }
-    .card p { font-size: 1.3rem; font-weight: bold; }
-    .ganhos { color: var(--success); }
-    .gastos { color: var(--danger); }
-    .perdas { color: var(--warning); }
-    .saldo { color: var(--primary); }
-
-    /* Formulários e Inputs */
-    .form-container { background: var(--card); padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-    .form-group { display: flex; flex-direction: column; }
-    .form-group label { font-size: 0.8rem; margin-bottom: 4px; font-weight: 600; color: #475569; }
-    input, select, button { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; }
-    button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #1d4ed8; }
-    .btn-secondary { background: var(--accent); }
-    .btn-secondary:hover { background: #7c3aed; }
-
-    /* Controles e Tabela */
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    table { width: 100%; background: var(--card); border-collapse: collapse; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-    th { background: #f1f5f9; color: #475569; }
-    .btn-delete { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-
-    /* Modal / Guia de Investimentos */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; padding: 20px; z-index: 100; }
-    .modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .close-btn { background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; }
-    .guide-section { margin-bottom: 20px; }
-    .guide-section h4 { color: var(--primary); margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
-    .guide-section ul { margin-left: 20px; line-height: 1.6; }
-
-    /* Resumo da Simulação */
-    .sim-result { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
-    .sim-result p { margin-bottom: 8px; font-size: 1.05rem; }
-    .note-text { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-style: italic; }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <h1>Agenda Financeira & Investimentos</h1>
-
-    <!-- Abas de Navegação -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="mudarAba('agenda')">Agenda de Gastos & Perdas</button>
-      <button class="tab-btn" onclick="mudarAba('investimentos')">Análise de Investimentos</button>
-    </div>
-
-    <!-- ABA 1: AGENDA FINANCEIRA -->
-    <div id="aba-agenda" class="tab-content active">
-      <div class="controls">
-        <label for="filtroAno"><strong>Visualizar Ano:</strong></label>
-        <select id="filtroAno" onchange="renderizar()"></select>
-      </div>
-
-      <div class="dashboard">
-        <div class="card">
-          <h3>Total de Ganhos</h3>
-          <p id="totalGanhos" class="ganhos">R$ 0,00</p>
-        </div>
-        <div class="card">
-          <h3>Total de Gastos</h3>
-          <p id="totalGastos" class="gastos">R$ 0,00</p>
-        </div>
-        <div class="card">
-          <h3>Total de Perdas</h3>
-          <p id="totalPerdas" class="perdas">R$ 0,00</p>
-        </div>
-        <div class="card">
-          <h3>Saldo Final do Ano</h3>
-          <p id="saldoFinal" class="saldo">R$ 0,00</p>
-        </div>
-      </div>
-
-      <div class="form-container">
-        <h3>Novo Registro</h3>
-        <form id="formFinancas" onsubmit="adicionarRegistro(event)">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Descrição</label>
-              <input type="text" id="descricao" placeholder="Ex: Salário, Multa, Queda Ações" required>
-            </div>
-            <div class="form-group">
-              <label>Valor (R$)</label>
-              <input type="number" id="valor" step="0.01" placeholder="0,00" required>
-            </div>
-            <div class="form-group">
-              <label>Tipo</label>
-              <select id="tipo" required>
-                <option value="ganho">Ganho (+)</option>
-                <option value="gasto">Gasto (-)</option>
-                <option value="perda">Perda / Prejuízo (-)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Mês</label>
-              <select id="mes" required>
-                <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
-                <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
-                <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
-                <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Ano</label>
-              <input type="number" id="ano" placeholder="Ano" required>
-            </div>
-            <div class="form-group" style="justify-content: flex-end;">
-              <button type="submit">Adicionar</button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Mês</th>
-            <th>Descrição</th>
-            <th>Tipo</th>
-            <th>Valor</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody id="tabelaCorpo"></tbody>
-      </table>
-    </div>
-
-    <!-- ABA 2: ANÁLISE DE INVESTIMENTOS -->
-    <div id="aba-investimentos" class="tab-content">
-      <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-        <button class="btn-secondary" onclick="abrirModalGuia()">📘 Guia de Tipos e Lugares para Investir</button>
-      </div>
-
-      <!-- Simulador de Investimentos Avançado -->
-      <div class="form-container">
-        <h3>Simulador Multi-Investimentos (Com Opção de Perda)</h3>
-        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Simule rendimentos positivos ou cenários de desvalorização (taxas negativas).</p>
-        
-        <form id="formSimulador" onsubmit="simularInvestimento(event)">
-          <div class="form-grid">
-            
-            <div class="form-group">
-              <label>Categoria / Tipo:</label>
-              <select id="simCategoria" onchange="atualizarTaxaSugerida()">
-                <optgroup label="Renda Fixa">
-                  <option value="tesouro" data-taxa="10.5">Tesouro Selic / CDB 100% CDI (~10.5% a.a.)</option>
-                  <option value="lci" data-taxa="9.0">LCI/LCA Isento de IR (~9.0% a.a.)</option>
-                  <option value="poupanca" data-taxa="6.17">Poupança (~6.17% a.a.)</option>
-                </optgroup>
-                <optgroup label="Renda Variável (Estimativa Média)">
-                  <option value="fiis" data-taxa="11.0">Fundos Imobiliários / FIIs (~11.0% a.a.)</option>
-                  <option value="acoes" data-taxa="13.0">Ações / Ibovespa Médio (~13.0% a.a.)</option>
-                  <option value="cripto" data-taxa="25.0">Criptomoedas / Alto Risco (~25.0% a.a.)</option>
-                </optgroup>
-                <optgroup label="Cenários de Perda / Risco">
-                  <option value="queda_leve" data-taxa="-5.0">Desvalorização Leve (-5.0% a.a.)</option>
-                  <option value="queda_forte" data-taxa="-20.0">Desvalorização Severa (-20.0% a.a.)</option>
-                </optgroup>
-                <optgroup label="Personalizado">
-                  <option value="custom" data-taxa="10.0">Definir Taxa Manualmente</option>
-                </optgroup>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Regime de Juros:</label>
-              <select id="simTipoJuros">
-                <option value="compostos">Juros Compostos (Padrão Real)</option>
-                <option value="simples">Juros Simples (Rendimento Fixo)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Aporte Inicial (R$):</label>
-              <input type="number" id="simInicial" step="0.01" placeholder="Ex: 1000" required>
-            </div>
-
-            <div class="form-group">
-              <label>Aporte Mensal (R$):</label>
-              <input type="number" id="simMensal" step="0.01" placeholder="Ex: 200" value="0">
-            </div>
-
-            <div class="form-group">
-              <label>Taxa Anual (%) - Positiva ou Negativa:</label>
-              <input type="number" id="simTaxa" step="0.1" placeholder="Ex: 10.5 ou -5.0" value="10.5" required>
-            </div>
-
-            <div class="form-group">
-              <label>Prazo (Anos):</label>
-              <input type="number" id="simAnos" placeholder="Ex: 5" required>
-            </div>
-
-            <div class="form-group" style="justify-content: flex-end; grid-column: 1 / -1;">
-              <button type="submit" style="width: 100%;">Executar Simulação</button>
-            </div>
-          </div>
-        </form>
-
-        <div id="resultadoSimulacao" class="sim-result">
-          <p><strong>Modalidade Escolhida:</strong> <span id="resTipoInvestimento">-</span> (<span id="resModoJuros">-</span>)</p>
-          <p><strong>Valor Total Investido (Seu Bolso):</strong> <span id="resInvestido">R$ 0,00</span></p>
-          <p><strong>Resultado (Rendimento / Perda):</strong> <span id="resJuros">R$ 0,00</span></p>
-          <p><strong>Valor Total Acumulado:</strong> <span id="resTotal" class="saldo">R$ 0,00</span></p>
-          <p class="note-text">* Atenção: Em Renda Variável as taxas são estimativas históricas e os ganhos ou perdas futuros não são garantidos.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: GUIA DE INVESTIMENTOS -->
-  <div id="modalGuia" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Guia Prático de Investimentos</h2>
-        <button class="close-btn" onclick="fecharModalGuia()">&times;</button>
-      </div>
-
-      <div class="guide-section">
-        <h4>1. Tipos de Investimentos</h4>
-        <ul>
-          <li><strong>Renda Fixa (Baixo Risco):</strong>
-            <ul>
-              <li><strong>Tesouro Direto:</strong> Empréstimo de dinheiro para o governo. Seguro e ideal para reserva de emergência (Tesouro Selic).</li>
-              <li><strong>CDBs:</strong> Empréstimo para bancos. Busque os que rendem no mínimo 100% do CDI. Protegidos pelo FGC até R$ 250 mil.</li>
-              <li><strong>LCI / LCA:</strong> Títulos do setor imobiliário/agronegócio. Isentos de Imposto de Renda.</li>
-            </ul>
-          </li>
-          <li><strong>Renda Variável (Médio/Alto Risco):</strong>
-            <ul>
-              <li><strong>Ações:</strong> Torne-se sócio de grandes empresas. Potencial de valorização e dividendos, mas sujeita a perdas com oscilações do mercado.</li>
-              <li><strong>Fundos Imobiliários (FIIs):</strong> Invista em imóveis com pouco dinheiro e receba "aluguéis" mensais isentos de IR.</li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-
-      <div class="guide-section">
-        <h4>2. Onde Investir (Lugares Recomendados)</h4>
-        <ul>
-          <li><strong>Bancos Digitais (Fácil e para Iniciantes):</strong> Nubank, Banco Inter, C6 Bank, Itaú (íon). Oferecem CDBs com liquidez diária e Tesouro Direto direto no app.</li>
-          <li><strong>Corretoras Especializadas (Maior Variedade):</strong> XP Investimentos, BTG Pactual, NuInvest, Rico. Ideal para quem quer investir em Ações, FIIs e opções mais avançadas de Renda Fixa.</li>
-        </ul>
-      </div>
-
-      <div class="guide-section">
-        <h4>3. Dica Financeira Básica</h4>
-        <p>Antes de investir em Renda Variável, monte uma <strong>Reserva de Emergência</strong> equivalente a 3 a 6 meses do seu custo de vida em uma aplicação de Renda Fixa com liquidez diária (saque imediato).</p>
-      </div>
-    </div>
-  </div>
+  <title>VALORANT Protocol | Manual de Integração & Visual Range 3D</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <script>
-    // Gerenciamento de Abas
-    function mudarAba(aba) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            valRed: '#FF4655',
+            valDark: '#0F1923',
+            valDarkAlt: '#1F2326',
+            valCyan: '#00F0FF',
+            valGold: '#ECE8E1',
+            valYellow: '#FFD700',
+            valGrey: '#768079'
+          },
+          fontFamily: {
+            valFont: ['Tungsten', 'Impact', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
+
+    body {
+      background-color: #0F1923;
+      color: #ECE8E1;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Custom VALORANT Angled Aesthetics */
+    .val-cut {
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    }
+    .val-cut-top {
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
+    .val-btn-red {
+      background-color: #FF4655;
+      color: #FFF;
+      position: relative;
+      transition: all 0.2s ease;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    }
+    .val-btn-red:hover {
+      background-color: #E03E4C;
+      box-shadow: 0 0 12px rgba(255, 70, 85, 0.6);
+      transform: translateY(-1px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0F1923;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #FF4655;
+      border-radius: 2px;
+    }
+
+    /* Crosshair & Scope Overlay */
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 12px;
+      height: 12px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 30;
+    }
+    .ch-dot {
+      width: 4px;
+      height: 4px;
+      background: #00F0FF;
+      border-radius: 50%;
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      box-shadow: 0 0 4px #00F0FF;
+    }
+
+    /* Scope overlay */
+    #scopeOverlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 30%, black 70%);
+      display: none;
+      pointer-events: none;
+      z-index: 25;
+    }
+    #scopeCrosshair {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+    }
+    #scopeCrosshair::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 50%;
+      width: 1px;
+      background: rgba(255, 70, 85, 0.8);
+    }
+    #scopeCrosshair::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      height: 1px;
+      background: rgba(255, 70, 85, 0.8);
+    }
+
+    /* Hit Marker */
+    .hit-marker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      transform: translate(-50%, -50%) rotate(45deg);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+      z-index: 31;
+    }
+    .hit-marker-line {
+      position: absolute;
+      background: #FF4655;
+    }
+
+    /* Glowing Text Effects */
+    .glow-cyan {
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+    .glow-red {
+      text-shadow: 0 0 10px rgba(255, 70, 85, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-valDark text-valGold min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="bg-valDarkAlt border-b-2 border-valRed px-6 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xl">
+    <div class="flex items-center space-x-4">
+      <div class="w-10 h-10 bg-valRed flex items-center justify-center font-black text-2xl text-valDark val-cut">
+        V
+      </div>
+      <div>
+        <h1 class="text-xl font-black tracking-widest text-white uppercase flex items-center gap-2">
+          VALORANT <span class="text-valRed">PROTOCOL</span>
+        </h1>
+        <p class="text-xs text-valGrey font-mono tracking-wider">INTEL MANUAL & INTERACTIVE 3D RANGE v4.0</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center space-x-2">
+      <button id="tabManualBtn" onclick="switchTab('manual')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut">
+        <i class="fa-solid fa-book-open mr-2"></i> Manual de Integração
+      </button>
+      <button id="tabAgentsBtn" onclick="switchTab('agents')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">
+        <i class="fa-solid fa-users mr-2"></i> Agentes (<span id="agentCountBadge">25</span>)
+      </button>
+      <button id="tabWeaponsBtn" onclick="switchTab('weapons')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">
+        <i class="fa-solid fa-gun mr-2"></i> Arsenal (<span id="weaponCountBadge">18</span>)
+      </button>
+      <button id="tabRangeBtn" onclick="switchTab('range')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valCyan/50 text-valCyan hover:bg-valCyan/10 val-cut">
+        <i class="fa-solid fa-crosshairs mr-2"></i> Range 3D
+      </button>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 relative overflow-y-auto">
+
+    <!-- ==================== SECTION 1: MANUAL DE INTEGRAÇÃO ==================== -->
+    <section id="sectionManual" class="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
       
-      if(aba === 'agenda') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('aba-agenda').classList.add('active');
-      } else {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('aba-investimentos').classList.add('active');
+      <!-- HERO / INTRO -->
+      <div class="relative bg-valDarkAlt border border-valRed/30 p-8 rounded-lg val-cut overflow-hidden shadow-2xl">
+        <div class="absolute -right-12 -bottom-12 opacity-10 text-9xl text-valRed font-black">RIOT</div>
+        <div class="relative z-10 max-w-3xl">
+          <span class="inline-block px-3 py-1 bg-valRed/20 border border-valRed text-valRed text-xs font-mono tracking-widest uppercase mb-3">
+            SECRETO // VALORANT PROTOCOL HQ
+          </span>
+          <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
+            MANUAL DE INTEGRAÇÃO DO <span class="text-valRed">AGENTE PROTOCOLO</span>
+          </h2>
+          <p class="text-gray-300 leading-relaxed text-base">
+            Bem-vindo ao Protocolo VALORANT. Este documento contém as diretrizes táticas, normas institucionais, cultura corporativa e expectativas de conduta para todos os Operadores, Radiantes e Especialistas Integrados à Riot Games / Valorant HQ.
+          </p>
+        </div>
+      </div>
+
+      <!-- SEÇÕES DO MANUAL -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- 1. Apresentação da Empresa -->
+        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
+          <div class="flex items-center space-x-3 mb-3">
+            <i class="fa-solid fa-building text-2xl text-valRed group-hover:text-valCyan"></i>
+            <h3 class="text-xl font-bold uppercase tracking-wider text-white">1. Apresentação da Empresa</h3>
+          </div>
+          <p class="text-sm text-gray-300 leading-relaxed mb-3">
+            O **Protocolo VALORANT** é uma organização de defesa global de alto risco operada em sigilo absoluto sob diretrizes de liderança tática da Riot Games.
+          </p>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>Fundação: Pós-evento Primeira Luz (First Light).</li>
+            <li>Missão: Proteger a Terra e a Radianita contra ameaças interdimensionais e invasores da Terra-2.</li>
+            <li>Visão: Excelência tática, integração tecnológica e coordenação global sem fronteiras.</li>
+          </ul>
+        </div>
+
+        <!-- 2. Regras de Convivência no Time -->
+        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
+          <div class="flex items-center space-x-3 mb-3">
+            <i class="fa-solid fa-handshake text-2xl text-valRed group-hover:text-valCyan"></i>
+            <h3 class="text-xl font-bold uppercase tracking-wider text-white">2. Convivência no Time</h3>
+          </div>
+          <p class="text-sm text-gray-300 leading-relaxed mb-3">
+            A diversidade de origens, poderes Radiantes e especialidades militares é nossa maior força. O respeito mutuo é inegociável.
+          </p>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>Zero tolerância para toxicidade, preconceito ou insubordinação.</li>
+            <li>Suporte constante ao colega de equipe (Trade Kills, Cobertura e Utilitários).</li>
+            <li>Resolução direta e madura de divergências táticas após as operações.</li>
+          </ul>
+        </div>
+
+        <!-- 3. Horários, Frequência e Rotina -->
+        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
+          <div class="flex items-center space-x-3 mb-3">
+            <i class="fa-solid fa-clock text-2xl text-valRed group-hover:text-valCyan"></i>
+            <h3 class="text-xl font-bold uppercase tracking-wider text-white">3. Horários & Rotina de Treino</h3>
+          </div>
+          <p class="text-sm text-gray-300 leading-relaxed mb-3">
+            A prontidão tática exige disciplina diária no Range de Treinamento e nas reuniões de análise (Briefings).
+          </p>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>08:00 - Aquecimento de Mira & Treino Físico (The Range).</li>
+            <li>10:00 - Briefing Tático e Análise de VODs da Terra-2.</li>
+            <li>14:00 às 18:00 - Simulados de Confronto Tático & Treino de Retake.</li>
+            <li>Pontualidade e 100% de presença são monitorados pela IA de Brik.</li>
+          </ul>
+        </div>
+
+        <!-- 4. Cuidados com Documentos & Segredos -->
+        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
+          <div class="flex items-center space-x-3 mb-3">
+            <i class="fa-solid fa-user-shield text-2xl text-valRed group-hover:text-valCyan"></i>
+            <h3 class="text-xl font-bold uppercase tracking-wider text-white">4. Segredos do Protocolo</h3>
+          </div>
+          <p class="text-sm text-gray-300 leading-relaxed mb-3">
+            As tecnologias de Radianita, coordenadas dos quartéis e registros de identidade são de **Nível de Acesso Ômega**.
+          </p>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>Proibida a transmissão de dados fora de redes criptografadas da Kingdom/Protocol.</li>
+            <li>Vazamentos resultam em prisão imediata e neutralização tática.</li>
+            <li>Dispositivos pessoais devem permanecer em cofres Faraday na entrada.</li>
+          </ul>
+        </div>
+
+        <!-- 5. Normas Básicas de Segurança Tática -->
+        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
+          <div class="flex items-center space-x-3 mb-3">
+            <i class="fa-solid fa-shield-halved text-2xl text-valRed group-hover:text-valCyan"></i>
+            <h3 class="text-xl font-bold uppercase tracking-wider text-white">5. Segurança Tática</h3>
+          </div>
+          <p class="text-sm text-gray-300 leading-relaxed mb-3">
+            Mantenha equipamentos e utilitários radiantes sob estrito controle para evitar acidentes no QG.
+          </p>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>Travar a trava de segurança de armas fora da zona de tiro.</li>
+            <li>Manipulação de Radianita pura exige equipamento de proteção bioclástica.</li>
+            <li>Proibido o uso de habilidades Radiantes ofensivas fora de áreas autorizadas.</li>
+          </ul>
+        </div>
+
+        <!-- 6. Orientações sobre Comunicação -->
+        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
+          <div class="flex items-center space-x-3 mb-3">
+            <i class="fa-solid fa-headset text-2xl text-valRed group-hover:text-valCyan"></i>
+            <h3 class="text-xl font-bold uppercase tracking-wider text-white">6. Comunicação Rádio & Voz</h3>
+          </div>
+          <p class="text-sm text-gray-300 leading-relaxed mb-3">
+            Comunicação clara, curta e sem ruídos salva vidas no campo de batalha e no ambiente de escritório.
+          </p>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>Utilize chamadas de mapa padronizadas (Callouts: A Main, Heaven, Hell, Elbow).</li>
+            <li>Informe Dano Causado, Posição Inimiga e Economia antes de cada rodada.</li>
+            <li>Comunicação limpa durante momentos cruciais de Clutch (Silêncio de Rádio).</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- 7. CINCO ATITUDES ESPERADAS DO AGENTE EXCELENTE -->
+      <div class="bg-valDarkAlt border border-valCyan/30 p-8 rounded-lg val-cut">
+        <div class="flex items-center space-x-3 mb-6 border-b border-valCyan/20 pb-4">
+          <i class="fa-solid fa-star text-3xl text-valCyan glow-cyan"></i>
+          <div>
+            <h3 class="text-2xl font-black uppercase text-white tracking-wider">7. As 5 Atitudes Esperadas do Agente Excelente</h3>
+            <p class="text-xs text-valCyan font-mono">PILARES FUNDAMENTAIS DE DESEMPENHO NO PROTOCOLO</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div class="bg-valDark p-4 border-t-2 border-valRed val-cut">
+            <div class="text-valRed font-black text-2xl mb-1">01</div>
+            <h4 class="font-bold text-white mb-2 uppercase text-sm">Resiliência Absoluta</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Capacidade de adaptar estratégias e manter o foco mesmo em desvantagem no placar (12-4).</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-t-2 border-valCyan val-cut">
+            <div class="text-valCyan font-black text-2xl mb-1">02</div>
+            <h4 class="font-bold text-white mb-2 uppercase text-sm">Empatia & Trade</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Priorizar a vitória coletiva sobre estatísticas pessoais (KD). Morrer para garantir a troca é honroso.</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-t-2 border-valYellow val-cut">
+            <div class="text-valYellow font-black text-2xl mb-1">03</div>
+            <h4 class="font-bold text-white mb-2 uppercase text-sm">Comunicação Proativa</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Repassar informações vitais instantaneamente sem hesitação ou reclamações no microfone.</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-t-2 border-purple-500 val-cut">
+            <div class="text-purple-400 font-black text-2xl mb-1">04</div>
+            <h4 class="font-bold text-white mb-2 uppercase text-sm">Domínio de Utilitários</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Conhecer o timing, lineups e sinergias das habilidades de seu Agente perfeitamente.</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-t-2 border-green-500 val-cut">
+            <div class="text-green-400 font-black text-2xl mb-1">05</div>
+            <h4 class="font-bold text-white mb-2 uppercase text-sm">Disciplina Econômica</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Respeitar as chamadas de Eco, Semi-Buy e Full-Buy juntamente com o IGL da equipe.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== SECTION 2: ROSTER COMPLETO DE AGENTES ==================== -->
+    <section id="sectionAgents" class="p-6 md:p-10 max-w-7xl mx-auto space-y-8 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-valGrey/20 pb-6">
+        <div>
+          <h2 class="text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3">
+            ROSTER COMPLETO DE AGENTES <span class="text-valRed text-lg font-mono font-normal">(25 AGENTES)</span>
+          </h2>
+          <p class="text-sm text-gray-400">Selecione um agente para inspecionar bio, classe e kit de habilidades (C, Q, E, X).</p>
+        </div>
+
+        <!-- Role Filters -->
+        <div class="flex flex-wrap gap-2" id="roleFilters">
+          <button onclick="filterAgents('ALL')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valRed text-white val-cut">Todos</button>
+          <button onclick="filterAgents('Duelist')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Duelistas</button>
+          <button onclick="filterAgents('Initiator')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Iniciadores</button>
+          <button onclick="filterAgents('Controller')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Controladores</button>
+          <button onclick="filterAgents('Sentinel')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Sentinelas</button>
+        </div>
+      </div>
+
+      <!-- Agent Cards Grid -->
+      <div id="agentsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- JS injected agents cards -->
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 3: ARSENAL COMPLETO DE ARMAS ==================== -->
+    <section id="sectionWeapons" class="p-6 md:p-10 max-w-7xl mx-auto space-y-8 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-valGrey/20 pb-6">
+        <div>
+          <h2 class="text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3">
+            ARSENAL COMPLETO VALORANT <span class="text-valRed text-lg font-mono font-normal">(18 ARMAS)</span>
+          </h2>
+          <p class="text-sm text-gray-400">Todas as estatísticas oficiais: Dano, Taxa de Disparo, Pente, Custo e Modo de Disparo.</p>
+        </div>
+
+        <!-- Weapon Category Filters -->
+        <div class="flex flex-wrap gap-2" id="weaponFilters">
+          <button onclick="filterWeapons('ALL')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valRed text-white val-cut">Todas</button>
+          <button onclick="filterWeapons('Sidearms')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Leves</button>
+          <button onclick="filterWeapons('SMGs')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Submetralhadoras</button>
+          <button onclick="filterWeapons('Shotguns')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Escopetas</button>
+          <button onclick="filterWeapons('Rifles')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Fuzis</button>
+          <button onclick="filterWeapons('Snipers')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Snipers</button>
+          <button onclick="filterWeapons('Heavy')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Pesadas</button>
+          <button onclick="filterWeapons('Melee')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Corpo a Corpo</button>
+        </div>
+      </div>
+
+      <!-- Weapons Cards Grid -->
+      <div id="weaponsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- JS injected weapon cards -->
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 4: 3D INTERACTIVE RANGE SIMULATOR ==================== -->
+    <section id="sectionRange" class="w-full h-[calc(100vh-65px)] relative hidden bg-black overflow-hidden">
+      
+      <!-- Canvas 3D -->
+      <canvas id="rangeCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+      <!-- Scope Overlay -->
+      <div id="scopeOverlay">
+        <div id="scopeCrosshair"></div>
+      </div>
+
+      <!-- HUD UI OVERLAY -->
+      <div class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between z-20">
+        
+        <!-- TOP HUD: Stats & Game Info -->
+        <div class="flex items-start justify-between">
+          <div class="bg-valDark/80 backdrop-blur border border-valRed/40 p-4 val-cut pointer-events-auto">
+            <div class="text-xs text-valGrey uppercase font-mono mb-1">ESTATÍSTICAS DO RANGE</div>
+            <div class="flex items-center gap-6">
+              <div>
+                <span class="text-xs text-gray-400 block">KILLS</span>
+                <span id="statKills" class="text-2xl font-black text-white">0</span>
+              </div>
+              <div>
+                <span class="text-xs text-gray-400 block">HEADSHOTS</span>
+                <span id="statHeadshots" class="text-2xl font-black text-valCyan">0</span>
+              </div>
+              <div>
+                <span class="text-xs text-gray-400 block">PRECISÃO</span>
+                <span id="statAccuracy" class="text-2xl font-black text-valYellow">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Controls Overlay Help -->
+          <div class="bg-valDark/80 backdrop-blur border border-valGrey/30 p-4 val-cut text-right pointer-events-auto">
+            <div class="text-xs text-valCyan font-mono font-bold uppercase mb-1">CONTROLES TÁTICOS</div>
+            <div class="text-xs text-gray-300 space-y-0.5 font-mono">
+              <p><span class="text-valRed">[CLIQUE]</span> Travar Mira na Tela</p>
+              <p><span class="text-valRed">[WASD]</span> Mover | <span class="text-valRed">[ESPAÇO]</span> Pular</p>
+              <p><span class="text-valRed">[B]</span> Loja de Armas | <span class="text-valRed">[F2]</span> Trocar Agente</p>
+              <p><span class="text-valRed">[R]</span> Recarregar | <span class="text-valRed">[E/C/Q/X]</span> Habilidades</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER START LOCK PROMPT -->
+        <div id="lockPrompt" class="self-center bg-valDark/90 border-2 border-valRed p-6 val-cut text-center pointer-events-auto shadow-2xl animate-pulse">
+          <i class="fa-solid fa-crosshairs text-4xl text-valRed mb-2"></i>
+          <h3 class="text-2xl font-black text-white uppercase tracking-wider">CLIQUE NA TELA PARA JOGAR</h3>
+          <p class="text-xs text-gray-300 font-mono mt-1">SISTEMA DE CONTROLE FPS (POINTER LOCK)</p>
+        </div>
+
+        <!-- BOTTOM HUD: Ammo & Abilities -->
+        <div class="flex items-end justify-between">
+          
+          <!-- Selected Agent Info & Skill Hotline -->
+          <div class="bg-valDark/90 border border-valCyan/40 p-4 val-cut pointer-events-auto flex items-center space-x-6">
+            <div>
+              <div id="hudAgentRole" class="text-xs text-valCyan font-mono uppercase">DUELISTA</div>
+              <div id="hudAgentName" class="text-3xl font-black text-white uppercase">JETT</div>
+            </div>
+
+            <!-- Ability Buttons UI -->
+            <div class="flex items-center space-x-3 border-l border-valGrey/30 pl-6">
+              <div class="text-center">
+                <div id="btnAbilityC" class="w-12 h-12 bg-valDarkAlt border border-valGrey/40 flex items-center justify-center font-black text-white val-cut text-lg">C</div>
+                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Tática</span>
+              </div>
+              <div class="text-center">
+                <div id="btnAbilityQ" class="w-12 h-12 bg-valDarkAlt border border-valGrey/40 flex items-center justify-center font-black text-white val-cut text-lg">Q</div>
+                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Assinatura</span>
+              </div>
+              <div class="text-center">
+                <div id="btnAbilityE" class="w-12 h-12 bg-valDarkAlt border border-valCyan flex items-center justify-center font-black text-valCyan val-cut text-lg">E</div>
+                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Especial</span>
+              </div>
+              <div class="text-center">
+                <div id="btnAbilityX" class="w-12 h-12 bg-valDarkAlt border border-valYellow flex items-center justify-center font-black text-valYellow val-cut text-lg">X</div>
+                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Ultimate</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Weapon Ammo Counter -->
+          <div class="bg-valDark/90 border border-valRed/50 p-4 val-cut pointer-events-auto text-right min-w-[200px]">
+            <div id="hudWeaponName" class="text-sm font-bold text-valRed uppercase tracking-wider">VANDAL</div>
+            <div class="flex items-baseline justify-end space-x-2">
+              <span id="hudCurrentAmmo" class="text-5xl font-black text-white">30</span>
+              <span class="text-xl text-valGrey font-bold">/</span>
+              <span id="hudReserveAmmo" class="text-xl font-bold text-gray-400">90</span>
+            </div>
+            <div id="reloadIndicator" class="text-xs text-valYellow font-mono mt-1 hidden">RECARREGANDO...</div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Hit Marker Element -->
+      <div id="hitMarker" class="hit-marker">
+        <div class="hit-marker-line w-full h-1 top-2.5"></div>
+        <div class="hit-marker-line h-full w-1 left-2.5"></div>
+      </div>
+
+      <!-- Dynamic Crosshair -->
+      <div id="crosshair">
+        <div class="ch-dot"></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL 1: BUY MENU (LOJA DE ARMAS - 'B') ==================== -->
+  <div id="modalBuyMenu" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+    <div class="bg-valDark border-2 border-valRed p-8 rounded-lg max-w-5xl w-full mx-4 val-cut shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="toggleBuyMenu(false)" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="mb-6 flex items-center justify-between border-b border-valGrey/30 pb-4">
+        <div>
+          <h2 class="text-3xl font-black text-white uppercase tracking-wider">LOJA DE ARMAS TÁTICA <span class="text-valRed">[B]</span></h2>
+          <p class="text-xs text-gray-400 font-mono">SELECIONE SUA ARMA PARA O RANGE DE TREINAMENTO</p>
+        </div>
+        <div class="bg-valDarkAlt px-4 py-2 border border-valYellow/40 val-cut">
+          <span class="text-xs text-gray-400 block font-mono">CRÉDITOS DISPONÍVEIS</span>
+          <span class="text-2xl font-black text-valYellow">9,000 ¤</span>
+        </div>
+      </div>
+
+      <!-- Buy Menu Categories -->
+      <div id="buyMenuGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: AGENT SELECT MODAL ('F2') ==================== -->
+  <div id="modalAgentSelect" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+    <div class="bg-valDark border-2 border-valCyan p-8 rounded-lg max-w-6xl w-full mx-4 val-cut shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="toggleAgentModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="mb-6 border-b border-valGrey/30 pb-4">
+        <h2 class="text-3xl font-black text-white uppercase tracking-wider">SELEÇÃO DE AGENTE PROTOCOLO <span class="text-valCyan">[F2]</span></h2>
+        <p class="text-xs text-gray-400 font-mono">TROQUE SEU OPERADOR PARA EXPERIMENTAR HABILIDADES 3D NO RANGE</p>
+      </div>
+
+      <!-- Agent Grid in Modal -->
+      <div id="modalAgentsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: AGENT DETAILS MODAL ==================== -->
+  <div id="modalAgentDetails" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden">
+    <div class="bg-valDark border-2 border-valRed p-8 rounded-lg max-w-3xl w-full mx-4 val-cut shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAgentDetails()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div id="agentDetailsContent">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- JavaScript Application Engine -->
+  <script>
+    /* ==========================================================================
+       1. DATA STRUCTURES: COMPLETE AGENTS & WEAPONS ROSTERS
+       ========================================================================== */
+
+    const AGENTS = [
+      // Duelists
+      {
+        id: 'jett',
+        name: 'Jett',
+        role: 'Duelist',
+        country: 'Coreia do Sul',
+        desc: 'Representando a Coreia do Sul, o estilo de luta veloz e evasivo de Jett permite que ela tome riscos que ninguém mais consegue.',
+        abilities: {
+          C: { name: 'Erupção das Brumas', desc: 'Lança instantaneamente um projétil que se expande em uma nuvem de fumaça.' },
+          Q: { name: 'Corrente Ascendente', desc: 'Impulsiona Jett alto no ar instantaneamente.' },
+          E: { name: 'Brisa de Impulso', desc: 'Impulsiona Jett na direção em que ela está se movendo.' },
+          X: { name: 'Tormenta de Aço', desc: 'Equipa um conjunto de facas arremessáveis altamente precisas.' }
+        }
+      },
+      {
+        id: 'phoenix',
+        name: 'Phoenix',
+        role: 'Duelist',
+        country: 'Reino Unido',
+        desc: 'Chegando com tudo do Reino Unido, o poder estelar de Phoenix se manifesta no seu estilo de luta, incendiando o campo de batalha.',
+        abilities: {
+          C: { name: 'Lodaçal', desc: 'Lança uma bola de fogo que explode após um delay ou ao atingir o chão.' },
+          Q: { name: 'Bola Curva', desc: 'Equipa um orbe de luz que faz uma curva antes de cegar todos os jogadores.' },
+          E: { name: 'Combustão', desc: 'Cria uma cortina de fogo que bloqueia a visão e cura Phoenix se ele estiver sobre ela.' },
+          X: { name: 'Renascimento', desc: 'Coloca um marcador. Se Phoenix morrer durante a duração, ele renasce no marcador.' }
+        }
+      },
+      {
+        id: 'reyna',
+        name: 'Reyna',
+        role: 'Duelist',
+        country: 'México',
+        desc: 'Forjada no coração do México, Reyna domina o combate individual, se banhando na alma dos inimigos derrotados.',
+        abilities: {
+          C: { name: 'Olhar Devorador', desc: 'Equipa um olho flutuante que cega todos os inimigos que olharem para ele.' },
+          Q: { name: 'Devorar', desc: 'Consome a alma de um inimigo abatido para regenerar vida rapidamente.' },
+          E: { name: 'Dispensar', desc: 'Consome a alma de um inimigo para se tornar intangível por um breve período.' },
+          X: { name: 'Imperatriz', desc: 'Entra em frenesi, aumentando drasticamente a velocidade de disparo e recarga.' }
+        }
+      },
+      {
+        id: 'raze',
+        name: 'Raze',
+        role: 'Duelist',
+        country: 'Brasil',
+        desc: 'Chegando do Brasil com sua personalidade explosiva, Raze adora armas grandes e estragos em área.',
+        abilities: {
+          C: { name: 'Bot Explosivo', desc: 'Lança um robô terrestre que se prende aos inimigos e explode.' },
+          Q: { name: 'Carga de Explosivos', desc: 'Lança uma carga aderente que impulsiona Raze e causa dano.' },
+          E: { name: 'Cartuchos de Tinta', desc: 'Equipa uma granada de fragmentação que se divide em sub-munições.' },
+          X: { name: 'Estraga-Prazeres', desc: 'Equipa um lança-foguetes devastador que causa dano massivo em área.' }
+        }
+      },
+      {
+        id: 'yoru',
+        name: 'Yoru',
+        role: 'Duelist',
+        country: 'Japão',
+        desc: 'Nativo do Japão, Yoru abre fendas no tecido da realidade para se infiltrar nas linhas inimigas sem ser visto.',
+        abilities: {
+          C: { name: 'Ponto Cego', desc: 'Lança um fragmento dimensional que ricocheteia e cega os inimigos.' },
+          Q: { name: 'Passagem Dimensional', desc: 'Lança um elo de teleporte que pode ser reativado para mudar de posição.' },
+          E: { name: 'Mundo Enganoso', desc: 'Cria um clone ilusório de Yoru que avança e cega ao ser destruído.' },
+          X: { name: 'Espionagem Dimensional', desc: 'Equipa uma máscara que permite entrar na dimensão de Yoru, ficando invisível.' }
+        }
+      },
+      {
+        id: 'neon',
+        name: 'Neon',
+        role: 'Duelist',
+        country: 'Filipinas',
+        desc: 'A agente filipina avança em velocidades impressionantes, descarregando surtos de bioeletricidade radiante.',
+        abilities: {
+          C: { name: 'Via Expressa', desc: 'Lança duas linhas de energia paralela que formam paredes elétricas.' },
+          Q: { name: 'Raio Involuntário', desc: 'Lança um raio de energia que ricocheteia e atordoa as zonas afetadas.' },
+          E: { name: 'Equipamento Elétrico', desc: 'Canaliza energia para ganhar velocidade de movimento e deslizar.' },
+          X: { name: 'Overdrive', desc: 'Desencadeia todo o seu poder em um raio elétrico letal e ultra preciso.' }
+        }
+      },
+      {
+        id: 'iso',
+        name: 'Iso',
+        role: 'Duelist',
+        country: 'China',
+        desc: 'Iso é um assassino de aluguel chinês que entra em estado de fluxo para reconfigurar a energia ambiente em proteção.',
+        abilities: {
+          C: { name: 'Contingência', desc: 'Dispara um muro de energia prismática indestrutível que avança.' },
+          Q: { name: 'Evolução', desc: 'Lança um projétil molecular que atravessa paredes e aplica estado Frágil.' },
+          E: { name: 'Fluxo Duplo', desc: 'Ganha um escudo protetor ao disparar no orbe gerado por abate.' },
+          X: { name: 'Contrato de Morte', desc: 'Puxa a si mesmo e ao primeiro inimigo atingido para uma arena de duelo 1v1.' }
+        }
+      },
+
+      // Initiators
+      {
+        id: 'breach',
+        name: 'Breach',
+        role: 'Initiator',
+        country: 'Suécia',
+        desc: 'Breach lança impactos sísmicos poderosos para abrir caminho através do território inimigo sem compaixão.',
+        abilities: {
+          C: { name: 'Pós-Choque', desc: 'Dispara um jato sísmico através da parede que causa dano massivo.' },
+          Q: { name: 'Estopim', desc: 'Lança uma carga cegante através de superfícies rígidas.' },
+          E: { name: 'Falha Tectônica', desc: 'Equipa um impacto sísmico que atordoa todos os alvos no caminho.' },
+          X: { name: 'Onda Sólida', desc: 'Dispara uma onda de choque devastadora em cone que arremessa e atordoa.' }
+        }
+      },
+      {
+        id: 'fade',
+        name: 'Fade',
+        role: 'Initiator',
+        country: 'Turquia',
+        desc: 'A caçadora de recompensas turca domina os pesadelos para extrair os segredos dos seus alvos.',
+        abilities: {
+          C: { name: 'Tormentador', desc: 'Lança uma criatura que segue rastros e cega/surdece os inimigos.' },
+          Q: { name: 'Captura', desc: 'Lança um orbe de tinta que se prende ao chão e encurrala os alvos.' },
+          E: { name: 'Revelar', desc: 'Dispara uma entidade assustadora que revela a posição dos alvos atingidos.' },
+          X: { name: 'Voz da Penumbra', desc: 'Dispara uma onda de energia de Pesadelo que ensurdece e deteriora vida.' }
+        }
+      },
+      {
+        id: 'gekko',
+        name: 'Gekko',
+        role: 'Initiator',
+        country: 'EUA',
+        desc: 'Nascido em Los Angeles, Gekko lidera um grupo de criaturas leais que avançam para desorientar o time inimigo.',
+        abilities: {
+          C: { name: 'Mosh Pit', desc: 'Arremessa Mosh, que se expande em uma área explosiva nociva.' },
+          Q: { name: 'Wingman', desc: 'Envia Wingman para desorientar inimigos ou armar/desarmar a Spike.' },
+          E: { name: 'Dizzy', desc: 'Lança Dizzy para voar e disparar feixes cegantes contra inimigos no campo de visão.' },
+          X: { name: 'Thrash', desc: 'Controla Thrash para avançar e explodir, detendo todos os alvos na área.' }
+        }
+      },
+      {
+        id: 'kayo',
+        name: 'KAY/O',
+        role: 'Initiator',
+        country: 'Terra Alternativa',
+        desc: 'KAY/O é uma máquina de guerra construída para neutralizar as capacidades dos Radiantes.',
+        abilities: {
+          C: { name: 'GRANADA/mem', desc: 'Arremessa uma granada que gruda no chão e explode múltiplas vezes.' },
+          Q: { name: 'GARRANCHO/fita', desc: 'Arremessa uma granada de clarão que cega rapidamente.' },
+          E: { name: 'PONTO/zero', desc: 'Lança uma faca que se prende à superfície e suprime habilidades inimigas.' },
+          X: { name: 'ANULAR/cmd', desc: 'Emite pulsos maciços de energia que suprimem inimigos e permitem autorressuscitação.' }
+        }
+      },
+      {
+        id: 'skye',
+        name: 'Skye',
+        role: 'Initiator',
+        country: 'Austrália',
+        desc: 'Oriunda da Austrália, Skye e seu bando de feras criadas em madeira abrem caminho em território hostil.',
+        abilities: {
+          C: { name: 'Regeneração', desc: 'Equipa um amuleto de cura que restaura os aliados dentro do alcance.' },
+          Q: { name: 'Predador Sombrio', desc: 'Controla um tigre da tasmânia que avança para salto e atordoamento.' },
+          E: { name: 'Luz Desbravadora', desc: 'Equipa um falcão guiável que se transforma em cegueira luminosa.' },
+          X: { name: 'Rastradores', desc: 'Lança três rastreadores que buscam os três inimigos mais próximos.' }
+        }
+      },
+      {
+        id: 'sova',
+        name: 'Sova',
+        role: 'Initiator',
+        country: 'Rússia',
+        desc: 'Nascido no inverno rigoroso da Rússia, Sova rastreia, localiza e elimina inimigos com precisão impecável.',
+        abilities: {
+          C: { name: 'Drone Coruja', desc: 'Equipa e controla um drone voador que dispara dardos reveladores.' },
+          Q: { name: 'Flecha de Choque', desc: 'Dispara uma flecha que detona ao impacto emitindo danos elétricos.' },
+          E: { name: 'Flecha Rastejante', desc: 'Dispara uma flecha de reconhecimento que revela a localização dos alvos.' },
+          X: { name: 'Fúria do Caçador', desc: 'Dispara três disparos de energia que atravessam o mapa inteiro.' }
+        }
+      },
+
+      // Controllers
+      {
+        id: 'astra',
+        name: 'Astra',
+        role: 'Controller',
+        country: 'Gana',
+        desc: 'Astra utiliza energias do cosmos para remodelar os campos de batalha de acordo com seu desejo.',
+        abilities: {
+          C: { name: 'Poço Gravitacional', desc: 'Ativa uma estrela para puxar todos os jogadores na área e fragilizá-los.' },
+          Q: { name: 'Pulso Nova', desc: 'Ativa uma estrela para explodir e atordoar todos na zona.' },
+          E: { name: 'Névoa Sombria', desc: 'Ativa uma estrela para transformá-la em uma cortina de fumaça.' },
+          X: { name: 'Divisão Cósmica', desc: 'Cria uma parede cósmica gigante que bloqueia disparos e abafa áudios.' }
+        }
+      },
+      {
+        id: 'brimstone',
+        name: 'Brimstone',
+        role: 'Controller',
+        country: 'EUA',
+        desc: 'Garantindo vantagem tática, o arsenal orbital de Brimstone garante que sua equipe sempre tenha superioridade.',
+        abilities: {
+          C: { name: 'Sinalizador Estimulante', desc: 'Lança um dispositivo que concede Fogo Rápido aos aliados.' },
+          Q: { name: 'Incendiário', desc: 'Lança uma granada incendiária que cria um piso em chamas.' },
+          E: { name: 'Fumaça Orbital', desc: 'Utiliza o mapa tático para lançar cortinas de fumaça duradouras.' },
+          X: { name: 'Ataque Orbital', desc: 'Dispara um raio laser orbital devastador em um local selecionado.' }
+        }
+      },
+      {
+        id: 'clove',
+        name: 'Clove',
+        role: 'Controller',
+        country: 'Escócia',
+        desc: 'Nativa da Escócia, Clove desafia a própria morte com travessuras que mantêm os inimigos em dúvida constante.',
+        abilities: {
+          C: { name: 'Absorção de Vitalidade', desc: 'Absorve a força de um inimigo abatido para ganhar aceleração e vida temporária.' },
+          Q: { name: 'Poder de Interferência', desc: 'Lança um fragmento de essência que reduz temporariamente a vida do alvo.' },
+          E: { name: 'Ruse (Névoa)', desc: 'Lança nuvens de fumaça que podem ser posicionadas mesmo após a morte.' },
+          X: { name: 'Ainda Não Morri', desc: 'Ressuscita após ser abatido se conseguir uma eliminação em breve.' }
+        }
+      },
+      {
+        id: 'harbor',
+        name: 'Harbor',
+        role: 'Controller',
+        country: 'Índia',
+        desc: 'Com tecnologia ancestral de controle hídrico, Harbor ergue muralhas de água e ondas protetoras.',
+        abilities: {
+          C: { name: 'Cascata', desc: 'Lança uma onda de água que avança e atravessa paredes, desacelerando alvos.' },
+          Q: { name: 'Enseada', desc: 'Lança uma esfera de água protetora que bloqueia projéteis e balas.' },
+          E: { name: 'Mar Mágico', desc: 'Guia uma cortina de água ao longo do chão para criar bloqueios flexíveis.' },
+          X: { name: 'Inundação', desc: 'Invoca um gêiser gigante que atinge posições inimigas repetidamente.' }
+        }
+      },
+      {
+        id: 'omen',
+        name: 'Omen',
+        role: 'Controller',
+        country: 'Desconhecido',
+        desc: 'Omen caça nas sombras. Ele cega inimigos, teleporta pelo campo e semeia paranoia constante.',
+        abilities: {
+          C: { name: 'Passos das Sombras', desc: 'Canaliza um teleporte de curta distância para posições selecionadas.' },
+          Q: { name: 'Paranoia', desc: 'Dispara um projétil sombrio em linha reta que cega e ensurdece todos atingidos.' },
+          E: { name: 'Manto Sombrio', desc: 'Lança uma esfera sombria que se expande na localização desejada.' },
+          X: { name: 'Das Sombras', desc: 'Teleporta-se para qualquer ponto do mapa inteiro como uma sombra.' }
+        }
+      },
+      {
+        id: 'viper',
+        name: 'Viper',
+        role: 'Controller',
+        country: 'EUA',
+        desc: 'A química norte-americana Viper emprega um arsenal de dispositivos tóxicos para controlar o combate.',
+        abilities: {
+          C: { name: 'Veneno de Cobra', desc: 'Lança um cartucho que se rompe em um poço ácido de dano e vulnerabilidade.' },
+          Q: { name: 'Nuvem Venenosa', desc: 'Lança um emissor de gás que pode ser ativado para criar fumaça tóxica.' },
+          E: { name: 'Cortina TÓXICA', desc: 'Lança uma linha de emissores que cria uma alta parede de gás veneno.' },
+          X: { name: 'Poço Peçonhento', desc: 'Borrifa uma nuvem química gigante que reduz a vida dos inimigos dentro dela.' }
+        }
+      },
+
+      // Sentinels
+      {
+        id: 'chamber',
+        name: 'Chamber',
+        role: 'Sentinel',
+        country: 'França',
+        desc: 'Bem vestido e armado até os dentes, o designer de armas francês Chamber mantém a linha com precisão cirúrgica.',
+        abilities: {
+          C: { name: 'Marca Registrada', desc: 'Posiciona uma armadilha que desacelera os inimigos detectados.' },
+          Q: { name: 'Caçador de Cabeças', desc: 'Equipa uma pistola pesada de alta precisão com mira telescópica.' },
+          E: { name: 'Rendezvous', desc: 'Posiciona uma âncora de teleporte para escapar instantaneamente de perigos.' },
+          X: { name: 'Tour de Force', desc: 'Invoca um fuzil de precisão personalizado letal que mata com um tiro no peito.' }
+        }
+      },
+      {
+        id: 'cypher',
+        name: 'Cypher',
+        role: 'Sentinel',
+        country: 'Marrocos',
+        desc: 'O especialista em rede de inteligência marroquino Cypher é uma rede de vigilância ambulante.',
+        abilities: {
+          C: { name: 'Fio-Armadilha', desc: 'Posiciona um fio invisível entre paredes que revela e imobiliza inimigos.' },
+          Q: { name: 'Gaiola Cibernética', desc: 'Lança uma armadilha que cria uma zona de bloqueio visual e efeito sonoro.' },
+          E: { name: 'Câmera de Vigilância', desc: 'Posiciona uma câmera remota que dispara dardos rastreadores.' },
+          X: { name: 'Assalto Neural', desc: 'Extrai informações do corpo de um inimigo abatido revelando a posição de todos.' }
+        }
+      },
+      {
+        id: 'deadlock',
+        name: 'Deadlock',
+        role: 'Sentinel',
+        country: 'Noruega',
+        desc: 'A agente norueguesa Deadlock emprega nanofios de alta tecnologia para parar os avanços mais agressivos.',
+        abilities: {
+          C: { name: 'Sensor Gravitacional', desc: 'Lança um sensor que se ativa com ruídos fortes de passos e disparos.' },
+          Q: { name: 'Barreira de Redes', desc: 'Lança um disco que cria um bloqueio de movimento de 4 vias.' },
+          E: { name: 'Muralha de Fios', desc: 'Ergue uma rede de nanofios que imobiliza qualquer um que passar.' },
+          X: { name: 'Aniquilação', desc: 'Dispara um casulo de nanofios que captura o primeiro inimigo e o puxa para a morte.' }
+        }
+      },
+      {
+        id: 'killjoy',
+        name: 'Killjoy',
+        role: 'Sentinel',
+        country: 'Alemanha',
+        desc: 'A inventora alemã Killjoy domina o campo de batalha com seu arsenal de invenções tecnológicas.',
+        abilities: {
+          C: { name: 'Nanoswarm', desc: 'Lança uma granada discreta que libera um enxame de nanobôs de alto dano.' },
+          Q: { name: 'Robô de Alarme', desc: 'Posiciona um robô furtivo que persegue e aplica vulnerabilidade ao alvo.' },
+          E: { name: 'Torreta', desc: 'Posiciona uma torreta que dispara automaticamente em inimigos num cone de 180°.' },
+          X: { name: 'Confinamento', desc: 'Ativa um dispositivo que detém e desarma todos os inimigos no alcance após countdown.' }
+        }
+      },
+      {
+        id: 'sage',
+        name: 'Sage',
+        role: 'Sentinel',
+        country: 'China',
+        desc: 'Como uma fortaleza chinesa, Sage garante segurança para si e sua equipe onde quer que vá com cura e cura total.',
+        abilities: {
+          C: { name: 'Orbe de Barreira', desc: 'Ergue uma sólida parede de gelo de alta resistência.' },
+          Q: { name: 'Orbe de Lentidão', desc: 'Lança um orbe que se despedaça em um campo de desaceleração ruidoso.' },
+          E: { name: 'Orbe de Cura', desc: 'Cura um aliado ou a si mesma ao longo do tempo.' },
+          X: { name: 'Ressurreição', desc: 'Ressuscita um aliado morto com vida cheia.' }
+        }
+      }
+    ];
+
+    const WEAPONS = [
+      // Sidearms
+      { id: 'classic', name: 'Classic', category: 'Sidearms', price: 0, ammo: 12, reserve: 36, fireRate: '6.75 t/s', mode: 'Semiautomático / Rajada 3 tiros', head: 78, body: 26, leg: 22 },
+      { id: 'shorty', name: 'Shorty', category: 'Sidearms', price: 300, ammo: 2, reserve: 10, fireRate: '3.3 t/s', mode: 'Semiautomático', head: 36, body: 12, leg: 10 },
+      { id: 'frenzy', name: 'Frenzy', category: 'Sidearms', price: 450, ammo: 13, reserve: 39, fireRate: '10 t/s', mode: 'Automático', head: 55, body: 26, leg: 22 },
+      { id: 'ghost', name: 'Ghost', category: 'Sidearms', price: 500, ammo: 15, reserve: 45, fireRate: '6.75 t/s', mode: 'Semiautomático (Silenciada)', head: 105, body: 30, leg: 25 },
+      { id: 'sheriff', name: 'Sheriff', category: 'Sidearms', price: 800, ammo: 6, reserve: 24, fireRate: '4 t/s', mode: 'Semiautomático', head: 159, body: 55, leg: 46 },
+
+      // SMGs
+      { id: 'stinger', name: 'Stinger', category: 'SMGs', price: 1100, ammo: 20, reserve: 60, fireRate: '18 t/s', mode: 'Automático / Rajada Zoom', head: 67, body: 27, leg: 22 },
+      { id: 'spectre', name: 'Spectre', category: 'SMGs', price: 1600, ammo: 30, reserve: 90, fireRate: '13.3 t/s', mode: 'Automático (Silenciada)', head: 78, body: 26, leg: 22 },
+
+      // Shotguns
+      { id: 'bucky', name: 'Bucky', category: 'Shotguns', price: 850, ammo: 5, reserve: 15, fireRate: '1.1 t/s', mode: 'Semiautomático (Tiro Secundário Airburst)', head: 44, body: 22, leg: 18 },
+      { id: 'judge', name: 'Judge', category: 'Shotguns', price: 1850, ammo: 7, reserve: 21, fireRate: '3.5 t/s', mode: 'Automático', head: 34, body: 17, leg: 14 },
+
+      // Rifles
+      { id: 'bulldog', name: 'Bulldog', category: 'Rifles', price: 2050, ammo: 24, reserve: 72, fireRate: '10 t/s', mode: 'Automático / Rajada Zoom 3 tiros', head: 115, body: 35, leg: 29 },
+      { id: 'guardian', name: 'Guardian', category: 'Rifles', price: 2250, ammo: 12, reserve: 36, fireRate: '5.25 t/s', mode: 'Semiautomático (Alta Penetração)', head: 195, body: 65, leg: 48 },
+      { id: 'phantom', name: 'Phantom', category: 'Rifles', price: 2900, ammo: 30, reserve: 90, fireRate: '11 t/s', mode: 'Automático (Silenciada)', head: 156, body: 39, leg: 33 },
+      { id: 'vandal', name: 'Vandal', category: 'Rifles', price: 2900, ammo: 25, reserve: 75, fireRate: '9.75 t/s', mode: 'Automático (Dano constante)', head: 160, body: 40, leg: 34 },
+
+      // Snipers
+      { id: 'marshal', name: 'Marshal', category: 'Snipers', price: 950, ammo: 5, reserve: 15, fireRate: '1.5 t/s', mode: 'Ferrolho / Zoom 3.5x', head: 202, body: 101, leg: 85 },
+      { id: 'outlaw', name: 'Outlaw', category: 'Snipers', price: 2400, ammo: 2, reserve: 10, fireRate: '2.75 t/s', mode: 'Cano Duplo / Zoom 4x', head: 238, body: 140, leg: 119 },
+      { id: 'operator', name: 'Operator', category: 'Snipers', price: 4700, ammo: 5, reserve: 10, fireRate: '0.6 t/s', mode: 'Sniper Pesado / Zoom 2.5x & 5x', head: 255, body: 150, leg: 120 },
+
+      // Machine Guns
+      { id: 'ares', name: 'Ares', category: 'Heavy', price: 1600, ammo: 50, reserve: 150, fireRate: '13 t/s', mode: 'Automático (Aceleração de disparo)', head: 72, body: 30, leg: 25 },
+      { id: 'odin', name: 'Odin', category: 'Heavy', price: 3200, ammo: 100, reserve: 200, fireRate: '15 t/s', mode: 'Automático (Supressão Massiva)', head: 95, body: 38, leg: 32 },
+
+      // Melee
+      { id: 'tacticalknife', name: 'Faca Tática', category: 'Melee', price: 0, ammo: '∞', reserve: '∞', fireRate: 'Slasher', mode: 'Ataque Leve / Pesado pelas Costas', head: 75, body: 50, leg: 50 }
+    ];
+
+    /* App State Variables */
+    let currentTab = 'manual';
+    let currentSelectedAgent = AGENTS[0]; // Jett
+    let currentSelectedWeapon = WEAPONS.find(w => w.id === 'vandal');
+    let currentAmmo = currentSelectedWeapon.ammo;
+    let reserveAmmo = currentSelectedWeapon.reserve;
+    let isReloading = false;
+    let isScoped = false;
+
+    /* Stats Trackers */
+    let stats = { kills: 0, headshots: 0, shotsFired: 0, shotsHit: 0 };
+
+    /* ==========================================================================
+       2. UI TAB NAVIGATION & UI RENDERERS
+       ========================================================================== */
+
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      document.getElementById('sectionManual').classList.add('hidden');
+      document.getElementById('sectionAgents').classList.add('hidden');
+      document.getElementById('sectionWeapons').classList.add('hidden');
+      document.getElementById('sectionRange').classList.add('hidden');
+
+      // Reset button styles
+      ['Manual', 'Agents', 'Weapons', 'Range'].forEach(t => {
+        const btn = document.getElementById(`tab${t}Btn`);
+        if (btn) {
+          btn.className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut";
+        }
+      });
+
+      if (tab === 'manual') {
+        document.getElementById('sectionManual').classList.remove('hidden');
+        document.getElementById('tabManualBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut";
+      } else if (tab === 'agents') {
+        document.getElementById('sectionAgents').classList.remove('hidden');
+        document.getElementById('tabAgentsBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut";
+        renderAgents('ALL');
+      } else if (tab === 'weapons') {
+        document.getElementById('sectionWeapons').classList.remove('hidden');
+        document.getElementById('tabWeaponsBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut";
+        renderWeapons('ALL');
+      } else if (tab === 'range') {
+        document.getElementById('sectionRange').classList.remove('hidden');
+        document.getElementById('tabRangeBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valCyan text-valDark font-extrabold val-cut shadow-lg shadow-valCyan/30";
+        init3DRange();
       }
     }
 
-    // Modal Guia
-    function abrirModalGuia() { document.getElementById('modalGuia').style.display = 'flex'; }
-    function fecharModalGuia() { document.getElementById('modalGuia').style.display = 'none'; }
+    // Render Agents Gallery
+    function renderAgents(roleFilter) {
+      const container = document.getElementById('agentsGrid');
+      container.innerHTML = '';
 
-    // --- LÓGICA DA AGENDA FINANCEIRA ---
-    let transacoes = JSON.parse(localStorage.getItem('transacoes_financeiras')) || [];
-    const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-    const anoAtual = new Date().getFullYear();
-    document.getElementById('ano').value = anoAtual;
+      const filtered = roleFilter === 'ALL' ? AGENTS : AGENTS.filter(a => a.role === roleFilter);
 
-    function inicializarFiltroAnos() {
-      const selectFiltro = document.getElementById('filtroAno');
-      const anos = [...new Set(transacoes.map(t => t.ano))];
-      if (!anos.includes(anoAtual)) anos.push(anoAtual);
-      anos.sort((a, b) => b - a);
+      filtered.forEach(agent => {
+        const card = document.createElement('div');
+        card.className = "bg-valDarkAlt border border-valGrey/20 p-5 val-cut relative group hover:border-valRed transition-all cursor-pointer flex flex-col justify-between";
+        card.onclick = () => openAgentDetails(agent);
 
-      selectFiltro.innerHTML = '';
-      anos.forEach(ano => {
-        const option = document.createElement('option');
-        option.value = ano;
-        option.textContent = ano;
-        selectFiltro.appendChild(option);
-      });
-    }
-
-    function adicionarRegistro(e) {
-      e.preventDefault();
-      const novaTransacao = {
-        id: Date.now(),
-        descricao: document.getElementById('descricao').value,
-        valor: parseFloat(document.getElementById('valor').value),
-        tipo: document.getElementById('tipo').value,
-        mes: parseInt(document.getElementById('mes').value),
-        ano: parseInt(document.getElementById('ano').value)
-      };
-
-      transacoes.push(novaTransacao);
-      salvarDados();
-      document.getElementById('descricao').value = '';
-      document.getElementById('valor').value = '';
-
-      inicializarFiltroAnos();
-      document.getElementById('filtroAno').value = novaTransacao.ano;
-      renderizar();
-    }
-
-    function removerRegistro(id) {
-      transacoes = transacoes.filter(t => t.id !== id);
-      salvarDados();
-      renderizar();
-    }
-
-    function salvarDados() {
-      localStorage.setItem('transacoes_financeiras', JSON.stringify(transacoes));
-    }
-
-    function formatarMoeda(valor) {
-      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    function renderizar() {
-      const anoSelecionado = parseInt(document.getElementById('filtroAno').value) || anoAtual;
-      const tabelaCorpo = document.getElementById('tabelaCorpo');
-      tabelaCorpo.innerHTML = '';
-
-      const transacoesFiltradas = transacoes.filter(t => t.ano === anoSelecionado);
-      transacoesFiltradas.sort((a, b) => a.mes - b.mes);
-
-      let totalGanhos = 0;
-      let totalGastos = 0;
-      let totalPerdas = 0;
-
-      transacoesFiltradas.forEach(t => {
-        let corTipo = 'var(--success)';
-        let nomeTipo = 'Ganho';
-
-        if (t.tipo === 'ganho') {
-          totalGanhos += t.valor;
-        } else if (t.tipo === 'gasto') {
-          totalGastos += t.valor;
-          corTipo = 'var(--danger)';
-          nomeTipo = 'Gasto';
-        } else if (t.tipo === 'perda') {
-          totalPerdas += t.valor;
-          corTipo = 'var(--warning)';
-          nomeTipo = 'Perda';
-        }
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${mesesNomes[t.mes - 1]}</td>
-          <td>${t.descricao}</td>
-          <td style="color: ${corTipo}">${nomeTipo}</td>
-          <td>${formatarMoeda(t.valor)}</td>
-          <td><button class="btn-delete" onclick="removerRegistro(${t.id})">Excluir</button></td>
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-mono px-2 py-0.5 bg-valDark text-valCyan border border-valCyan/30 rounded">${agent.role}</span>
+              <span class="text-xs text-gray-500 font-mono">${agent.country}</span>
+            </div>
+            <h3 class="text-2xl font-black text-white uppercase group-hover:text-valRed transition-colors mb-2">${agent.name}</h3>
+            <p class="text-xs text-gray-400 line-clamp-3 mb-4 leading-relaxed">${agent.desc}</p>
+          </div>
+          <div class="pt-3 border-t border-valGrey/20 flex items-center justify-between">
+            <span class="text-[10px] text-gray-500 font-mono">HABILIDADES: C Q E X</span>
+            <span class="text-xs text-valRed font-bold group-hover:translate-x-1 transition-transform">VER AGENTE <i class="fa-solid fa-arrow-right ml-1"></i></span>
+          </div>
         `;
-        tabelaCorpo.appendChild(tr);
+        container.appendChild(card);
+      });
+    }
+
+    function filterAgents(role) {
+      renderAgents(role);
+    }
+
+    // Open Agent Full Details Modal
+    function openAgentDetails(agent) {
+      const modal = document.getElementById('modalAgentDetails');
+      const content = document.getElementById('agentDetailsContent');
+
+      content.innerHTML = `
+        <div class="flex items-center justify-between border-b border-valGrey/30 pb-4 mb-6">
+          <div>
+            <span class="text-xs text-valCyan font-mono uppercase tracking-widest">${agent.role} // ${agent.country}</span>
+            <h2 class="text-4xl font-black text-white uppercase">${agent.name}</h2>
+          </div>
+          <button onclick="selectAgentFromModal('${agent.id}')" class="val-btn-red px-6 py-2 text-sm font-bold uppercase">
+            SELECIONAR PARA O RANGE
+          </button>
+        </div>
+
+        <p class="text-sm text-gray-300 leading-relaxed mb-6">${agent.desc}</p>
+
+        <h4 class="text-sm font-bold text-valRed uppercase tracking-wider mb-4 font-mono">KIT DE HABILIDADES TÁTICAS</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-valDark p-4 border-l-2 border-valCyan val-cut">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-black text-white uppercase text-sm">${agent.abilities.C.name}</span>
+              <span class="text-xs text-valCyan font-mono font-bold">[C]</span>
+            </div>
+            <p class="text-xs text-gray-400">${agent.abilities.C.desc}</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-l-2 border-valCyan val-cut">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-black text-white uppercase text-sm">${agent.abilities.Q.name}</span>
+              <span class="text-xs text-valCyan font-mono font-bold">[Q]</span>
+            </div>
+            <p class="text-xs text-gray-400">${agent.abilities.Q.desc}</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-l-2 border-valRed val-cut">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-black text-white uppercase text-sm">${agent.abilities.E.name}</span>
+              <span class="text-xs text-valRed font-mono font-bold">[E - ASSINATURA]</span>
+            </div>
+            <p class="text-xs text-gray-400">${agent.abilities.E.desc}</p>
+          </div>
+
+          <div class="bg-valDark p-4 border-l-2 border-valYellow val-cut">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-black text-white uppercase text-sm">${agent.abilities.X.name}</span>
+              <span class="text-xs text-valYellow font-mono font-bold">[X - ULTIMATE]</span>
+            </div>
+            <p class="text-xs text-gray-400">${agent.abilities.X.desc}</p>
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeAgentDetails() {
+      document.getElementById('modalAgentDetails').classList.add('hidden');
+    }
+
+    function selectAgentFromModal(agentId) {
+      const found = AGENTS.find(a => a.id === agentId);
+      if (found) {
+        currentSelectedAgent = found;
+        updateHUD();
+        closeAgentDetails();
+        toggleAgentModal(false);
+      }
+    }
+
+    // Render Weapons Gallery
+    function renderWeapons(categoryFilter) {
+      const container = document.getElementById('weaponsGrid');
+      container.innerHTML = '';
+
+      const filtered = categoryFilter === 'ALL' ? WEAPONS : WEAPONS.filter(w => w.category === categoryFilter);
+
+      filtered.forEach(weapon => {
+        const card = document.createElement('div');
+        card.className = "bg-valDarkAlt border border-valGrey/20 p-5 val-cut relative group hover:border-valCyan transition-all flex flex-col justify-between";
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-mono px-2 py-0.5 bg-valDark text-valYellow border border-valYellow/30 rounded">${weapon.category}</span>
+              <span class="text-sm font-black text-valYellow font-mono">${weapon.price > 0 ? weapon.price + ' ¤' : 'GRÁTIS'}</span>
+            </div>
+            <h3 class="text-2xl font-black text-white uppercase group-hover:text-valCyan transition-colors mb-1">${weapon.name}</h3>
+            <p class="text-xs text-gray-400 font-mono mb-4">Modo: ${weapon.mode}</p>
+          </div>
+
+          <div class="space-y-2 border-t border-valGrey/20 pt-3 text-xs font-mono">
+            <div class="flex justify-between text-gray-300">
+              <span>Munição Pente/Reserva:</span>
+              <span class="text-white font-bold">${weapon.ammo} / ${weapon.reserve}</span>
+            </div>
+            <div class="flex justify-between text-gray-300">
+              <span>Taxa de Disparo:</span>
+              <span class="text-white font-bold">${weapon.fireRate}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1 pt-2 border-t border-valGrey/10 text-center">
+              <div class="bg-valDark p-1.5 val-cut">
+                <span class="text-[10px] text-gray-500 block">CABEÇA</span>
+                <span class="text-valCyan font-bold">${weapon.head}</span>
+              </div>
+              <div class="bg-valDark p-1.5 val-cut">
+                <span class="text-[10px] text-gray-500 block">CORPO</span>
+                <span class="text-white font-bold">${weapon.body}</span>
+              </div>
+              <div class="bg-valDark p-1.5 val-cut">
+                <span class="text-[10px] text-gray-500 block">PERNAS</span>
+                <span class="text-gray-400 font-bold">${weapon.leg}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterWeapons(cat) {
+      renderWeapons(cat);
+    }
+
+    // Modal Buy Menu Populator
+    function renderBuyMenu() {
+      const container = document.getElementById('buyMenuGrid');
+      container.innerHTML = '';
+
+      WEAPONS.forEach(weapon => {
+        const isEquipped = currentSelectedWeapon.id === weapon.id;
+        const item = document.createElement('div');
+        item.className = `bg-valDarkAlt border ${isEquipped ? 'border-valRed bg-valRed/10' : 'border-valGrey/30 hover:border-white'} p-4 val-cut cursor-pointer transition-all flex flex-col justify-between`;
+        item.onclick = () => selectWeaponFromBuyMenu(weapon);
+
+        item.innerHTML = `
+          <div>
+            <div class="text-[10px] font-mono text-valYellow uppercase mb-1">${weapon.category}</div>
+            <h4 class="text-lg font-black text-white uppercase">${weapon.name}</h4>
+            <div class="text-xs font-mono text-valGrey mt-1">${weapon.price > 0 ? weapon.price + ' ¤' : 'GRÁTIS'}</div>
+          </div>
+          <div class="mt-4 pt-2 border-t border-valGrey/20 flex items-center justify-between">
+            <span class="text-[10px] text-gray-400 font-mono">${weapon.ammo} RDs</span>
+            <span class="text-xs font-bold ${isEquipped ? 'text-valRed' : 'text-valCyan'}">${isEquipped ? 'EQUIPADA' : 'COMPRAR'}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function toggleBuyMenu(show) {
+      const modal = document.getElementById('modalBuyMenu');
+      if (show) {
+        renderBuyMenu();
+        modal.classList.remove('hidden');
+        if (document.pointerLockElement) document.exitPointerLock();
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function selectWeaponFromBuyMenu(weapon) {
+      currentSelectedWeapon = weapon;
+      currentAmmo = weapon.ammo;
+      reserveAmmo = typeof weapon.reserve === 'number' ? weapon.reserve : 999;
+      updateHUD();
+      toggleBuyMenu(false);
+      create3DWeaponModel();
+    }
+
+    // Agent Selection Modal Populator
+    function renderAgentModalList() {
+      const container = document.getElementById('modalAgentsGrid');
+      container.innerHTML = '';
+
+      AGENTS.forEach(agent => {
+        const isSelected = currentSelectedAgent.id === agent.id;
+        const item = document.createElement('div');
+        item.className = `bg-valDarkAlt border ${isSelected ? 'border-valCyan bg-valCyan/10' : 'border-valGrey/30 hover:border-white'} p-3 val-cut cursor-pointer transition-all text-center`;
+        item.onclick = () => {
+          currentSelectedAgent = agent;
+          updateHUD();
+          toggleAgentModal(false);
+        };
+
+        item.innerHTML = `
+          <div class="text-[10px] font-mono text-valCyan uppercase mb-1">${agent.role}</div>
+          <h4 class="text-base font-black text-white uppercase">${agent.name}</h4>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function toggleAgentModal(show) {
+      const modal = document.getElementById('modalAgentSelect');
+      if (show) {
+        renderAgentModalList();
+        modal.classList.remove('hidden');
+        if (document.pointerLockElement) document.exitPointerLock();
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function updateHUD() {
+      document.getElementById('hudAgentName').innerText = currentSelectedAgent.name;
+      document.getElementById('hudAgentRole').innerText = currentSelectedAgent.role;
+      document.getElementById('hudWeaponName').innerText = currentSelectedWeapon.name;
+      document.getElementById('hudCurrentAmmo').innerText = currentAmmo;
+      document.getElementById('hudReserveAmmo').innerText = reserveAmmo;
+
+      document.getElementById('statKills').innerText = stats.kills;
+      document.getElementById('statHeadshots').innerText = stats.headshots;
+
+      const acc = stats.shotsFired > 0 ? Math.round((stats.shotsHit / stats.shotsFired) * 100) : 100;
+      document.getElementById('statAccuracy').innerText = acc + '%';
+    }
+
+
+    /* ==========================================================================
+       3. WEB AUDIO API - PROCEDURAL SOUND SYNTHESIS
+       ========================================================================== */
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+    }
+
+    function playGunshotSound() {
+      if (!audioCtx) return;
+      
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      // Sharp transient burst
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+
+    function playHeadshotDing() {
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(1800, now + 0.15);
+
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.2);
+    }
+
+
+    /* ==========================================================================
+       4. THREE.JS 3D RANGE SIMULATOR & FPS CONTROLLER
+       ========================================================================== */
+
+    let scene, camera, renderer;
+    let weaponMesh, weaponGroup;
+    let targets = [];
+    let is3DInitialized = false;
+
+    // Controls state
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    let velocity = new THREE.Vector3();
+    let direction = new THREE.Vector3();
+    let yaw = 0, pitch = 0;
+
+    function init3DRange() {
+      if (is3DInitialized) return;
+      is3DInitialized = true;
+
+      const container = document.getElementById('sectionRange');
+      const canvas = document.getElementById('rangeCanvas');
+
+      // 1. Scene setup
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f1923);
+      scene.fog = new THREE.FogExp2(0x0f1923, 0.015);
+
+      // 2. Camera setup
+      camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.set(0, 1.7, 0); // Eye level
+
+      // 3. Renderer setup
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+
+      // 4. Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+      dirLight.position.set(20, 40, 20);
+      dirLight.castShadow = true;
+      scene.add(dirLight);
+
+      // 5. Environment (Sandstone Floor & Target Range)
+      createRangeEnvironment();
+
+      // 6. Spawn Targets & Bot Dummies
+      spawnRangeBots();
+
+      // 7. Weapon Model attached to camera
+      weaponGroup = new THREE.Group();
+      camera.add(weaponGroup);
+      scene.add(camera);
+      create3DWeaponModel();
+
+      // Event Listeners
+      setupControls(canvas);
+
+      // Animation Loop
+      let lastTime = performance.now();
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const time = performance.now();
+        const delta = (time - lastTime) / 1000;
+        lastTime = time;
+
+        if (document.pointerLockElement === canvas) {
+          updateMovement(delta);
+        }
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+    }
+
+    // Build 3D Sandstone Range Architecture
+    function createRangeEnvironment() {
+      // Floor Grid
+      const floorGeo = new THREE.PlaneGeometry(100, 150);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x222930, roughness: 0.8 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.z = -50;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // Side Walls
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x1f2326, roughness: 0.6 });
+      const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(2, 20, 150), wallMat);
+      wallLeft.position.set(-25, 10, -50);
+      scene.add(wallLeft);
+
+      const wallRight = wallLeft.clone();
+      wallRight.position.x = 25;
+      scene.add(wallRight);
+
+      // Range Distance Markers (10m, 20m, 30m, 50m)
+      [10, 20, 30, 50].forEach(dist => {
+        const lineGeo = new THREE.BoxGeometry(48, 0.1, 0.5);
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0x00F0FF });
+        const line = new THREE.Mesh(lineGeo, lineMat);
+        line.position.set(0, 0.05, -dist);
+        scene.add(line);
       });
 
-      const saldoFinal = totalGanhos - (totalGastos + totalPerdas);
-      document.getElementById('totalGanhos').textContent = formatarMoeda(totalGanhos);
-      document.getElementById('totalGastos').textContent = formatarMoeda(totalGastos);
-      document.getElementById('totalPerdas').textContent = formatarMoeda(totalPerdas);
-      document.getElementById('saldoFinal').textContent = formatarMoeda(saldoFinal);
-      document.getElementById('saldoFinal').style.color = saldoFinal >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
-
-    // --- LÓGICA DO SIMULADOR DE INVESTIMENTOS ---
-    function atualizarTaxaSugerida() {
-      const selectCategoria = document.getElementById('simCategoria');
-      const opcaoSelecionada = selectCategoria.options[selectCategoria.selectedIndex];
-      const taxa = opcaoSelecionada.getAttribute('data-taxa');
-      
-      if (taxa) {
-        document.getElementById('simTaxa').value = taxa;
+      // Floating Radianite Crates
+      for (let i = 0; i < 6; i++) {
+        const crateGeo = new THREE.BoxGeometry(2, 2, 2);
+        const crateMat = new THREE.MeshStandardMaterial({ color: 0xFF4655, emissive: 0x330000, roughness: 0.3 });
+        const crate = new THREE.Mesh(crateGeo, crateMat);
+        crate.position.set((Math.random() - 0.5) * 30, 1 + Math.random() * 2, -15 - Math.random() * 35);
+        scene.add(crate);
       }
     }
 
-    function simularInvestimento(e) {
-      e.preventDefault();
+    // Spawn Bot Target Dummies with Head/Body Hitboxes
+    function spawnRangeBots() {
+      targets.forEach(t => scene.remove(t.group));
+      targets = [];
 
-      const categoriaSelect = document.getElementById('simCategoria');
-      const nomeCategoria = categoriaSelect.options[categoriaSelect.selectedIndex].text;
-      const tipoJuros = document.getElementById('simTipoJuros').value;
+      const positions = [
+        { x: -5, z: -10 }, { x: 0, z: -10 }, { x: 5, z: -10 },
+        { x: -8, z: -20 }, { x: 0, z: -20 }, { x: 8, z: -20 },
+        { x: -12, z: -30 }, { x: 0, z: -30 }, { x: 12, z: -30 }
+      ];
 
-      const inicial = parseFloat(document.getElementById('simInicial').value) || 0;
-      const mensal = parseFloat(document.getElementById('simMensal').value) || 0;
-      const taxaAnual = parseFloat(document.getElementById('simTaxa').value) || 0;
-      const anos = parseInt(document.getElementById('simAnos').value) || 0;
+      positions.forEach(pos => {
+        const group = new THREE.Group();
+        group.position.set(pos.x, 0, pos.z);
 
-      const meses = anos * 12;
-      let montante = 0;
-      let totalInvestido = inicial + (mensal * meses);
-      let totalResultado = 0;
+        // Body Mesh
+        const bodyGeo = new THREE.CylinderGeometry(0.5, 0.4, 1.6, 12);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        bodyMesh.position.y = 0.8;
+        bodyMesh.userData = { type: 'body', parentGroup: group };
+        group.add(bodyMesh);
 
-      if (tipoJuros === 'compostos') {
-        const taxaDecimal = taxaAnual / 100;
-        let taxaMensal;
-        
-        if (taxaAnual < 0) {
-          taxaMensal = - (1 - Math.pow(1 + taxaDecimal, 1 / 12));
+        // Head Mesh (Headshot Target)
+        const headGeo = new THREE.SphereGeometry(0.3, 16, 16);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0x00F0FF, emissive: 0x004455, roughness: 0.2 });
+        const headMesh = new THREE.Mesh(headGeo, headMat);
+        headMesh.position.y = 1.8;
+        headMesh.userData = { type: 'head', parentGroup: group };
+        group.add(headMesh);
+
+        scene.add(group);
+        targets.push({ group, headMesh, bodyMesh, alive: true });
+      });
+    }
+
+    // Create 3D FPS Gun Model
+    function create3DWeaponModel() {
+      while (weaponGroup.children.length > 0) {
+        weaponGroup.remove(weaponGroup.children[0]);
+      }
+
+      // Simple Stylized Valorant Rifle Geometry
+      const bodyGeo = new THREE.BoxGeometry(0.12, 0.16, 0.7);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1f2326, metalness: 0.8, roughness: 0.2 });
+      weaponMesh = new THREE.Mesh(bodyGeo, bodyMat);
+      weaponMesh.position.set(0.3, -0.25, -0.6);
+
+      // Barrel
+      const barrelGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8);
+      const barrelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+      const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.02, -0.5);
+      weaponMesh.add(barrel);
+
+      weaponGroup.add(weaponMesh);
+    }
+
+    // FPS Controls & Event Bindings
+    function setupControls(canvas) {
+      canvas.addEventListener('click', () => {
+        initAudio();
+        canvas.requestPointerLock();
+        document.getElementById('lockPrompt').classList.add('hidden');
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement !== canvas) return;
+
+        const sensitivity = 0.002;
+        yaw -= e.movementX * sensitivity;
+        pitch -= e.movementY * sensitivity;
+
+        // Clamp pitch to prevent camera flip
+        pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y = yaw;
+        camera.rotation.x = pitch;
+      });
+
+      // Key Bindings
+      window.addEventListener('keydown', (e) => {
+        if (document.pointerLockElement !== canvas) {
+          if (e.key.toLowerCase() === 'b') toggleBuyMenu(true);
+          if (e.key === 'F2') toggleAgentModal(true);
+          return;
+        }
+
+        switch (e.code) {
+          case 'KeyW': moveForward = true; break;
+          case 'KeyS': moveBackward = true; break;
+          case 'KeyA': moveLeft = true; break;
+          case 'KeyD': moveRight = true; break;
+          case 'KeyR': reloadWeapon(); break;
+          case 'KeyB': toggleBuyMenu(true); break;
+          case 'F2': toggleAgentModal(true); break;
+          case 'KeyC': triggerAbilityEffect('C'); break;
+          case 'KeyQ': triggerAbilityEffect('Q'); break;
+          case 'KeyE': triggerAbilityEffect('E'); break;
+          case 'KeyX': triggerAbilityEffect('X'); break;
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        switch (e.code) {
+          case 'KeyW': moveForward = false; break;
+          case 'KeyS': moveBackward = false; break;
+          case 'KeyA': moveLeft = false; break;
+          case 'KeyD': moveRight = false; break;
+        }
+      });
+
+      // Mouse Firing
+      window.addEventListener('mousedown', (e) => {
+        if (document.pointerLockElement !== canvas) return;
+        if (e.button === 0) fireWeapon(); // Left click
+        if (e.button === 2) toggleScope(); // Right click
+      });
+    }
+
+    // Movement Loop
+    function updateMovement(delta) {
+      velocity.x -= velocity.x * 10.0 * delta;
+      velocity.z -= velocity.z * 10.0 * delta;
+
+      direction.z = Number(moveForward) - Number(moveBackward);
+      direction.x = Number(moveRight) - Number(moveLeft);
+      direction.normalize();
+
+      if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
+      if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
+
+      camera.translateX(-velocity.x * delta);
+      camera.translateZ(velocity.z * delta);
+      camera.position.y = 1.7; // Fixed height
+    }
+
+    // Fire Weapon Mechanics & Raycasting
+    function fireWeapon() {
+      if (isReloading) return;
+      if (currentAmmo <= 0) {
+        reloadWeapon();
+        return;
+      }
+
+      currentAmmo--;
+      stats.shotsFired++;
+      updateHUD();
+      playGunshotSound();
+
+      // Recoil Weapon Kickback Animation
+      if (weaponMesh) {
+        weaponMesh.position.z += 0.08;
+        setTimeout(() => weaponMesh.position.z -= 0.08, 60);
+      }
+
+      // Raycast Shooting
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+      const targetMeshes = [];
+      targets.forEach(t => {
+        if (t.alive) {
+          targetMeshes.push(t.headMesh, t.bodyMesh);
+        }
+      });
+
+      const intersects = raycaster.intersectObjects(targetMeshes);
+
+      if (intersects.length > 0) {
+        stats.shotsHit++;
+        const hitObj = intersects[0].object;
+        const type = hitObj.userData.type;
+
+        triggerHitMarker();
+
+        if (type === 'head') {
+          stats.headshots++;
+          stats.kills++;
+          playHeadshotDing();
+          showDamageNumber('+160 HEADSHOT', '#00F0FF');
+          respawnBot(hitObj.userData.parentGroup);
         } else {
-          taxaMensal = Math.pow(1 + taxaDecimal, 1 / 12) - 1;
+          stats.kills++;
+          showDamageNumber('+40 BODY', '#FFFFFF');
+          respawnBot(hitObj.userData.parentGroup);
         }
 
-        montante = inicial;
-
-        for (let i = 0; i < meses; i++) {
-          montante += mensal;
-          montante *= (1 + taxaMensal);
-        }
-        totalResultado = montante - totalInvestido;
-
-      } else {
-        const taxaAnualDecimal = taxaAnual / 100;
-        const jurosInicial = inicial * taxaAnualDecimal * anos;
-        
-        let jurosMensais = 0;
-        for (let i = 1; i <= meses; i++) {
-          const tempoRestanteEmAnos = (meses - i + 1) / 12;
-          jurosMensais += mensal * taxaAnualDecimal * tempoRestanteEmAnos;
-        }
-
-        totalResultado = jurosInicial + jurosMensais;
-        montante = totalInvestido + totalResultado;
+        updateHUD();
       }
-
-      // Exibir Resultados
-      document.getElementById('resTipoInvestimento').textContent = nomeCategoria;
-      document.getElementById('resModoJuros').textContent = tipoJuros === 'compostos' ? 'Juros Compostos' : 'Juros Simples';
-      document.getElementById('resInvestido').textContent = formatarMoeda(totalInvestido);
-      
-      const elJuros = document.getElementById('resJuros');
-      elJuros.textContent = formatarMoeda(totalResultado);
-      elJuros.className = totalResultado >= 0 ? 'ganhos' : 'perdas';
-
-      document.getElementById('resTotal').textContent = formatarMoeda(montante);
-
-      document.getElementById('resultadoSimulacao').style.display = 'block';
     }
 
-    // Inicialização
-    inicializarFiltroAnos();
-    renderizar();
+    // Respawn Bot Target
+    function respawnBot(botGroup) {
+      botGroup.position.x = (Math.random() - 0.5) * 30;
+      botGroup.position.z = -10 - Math.random() * 35;
+    }
+
+    // Trigger Visual Hit Marker
+    function triggerHitMarker() {
+      const hm = document.getElementById('hitMarker');
+      hm.style.opacity = '1';
+      setTimeout(() => hm.style.opacity = '0', 120);
+    }
+
+    // Floating 3D Damage Numbers
+    function showDamageNumber(text, color) {
+      const el = document.createElement('div');
+      el.className = "fixed text-2xl font-black font-mono pointer-events-none transition-all z-40";
+      el.style.color = color;
+      el.style.top = "45%";
+      el.style.left = "52%";
+      el.innerText = text;
+      document.body.appendChild(el);
+
+      setTimeout(() => {
+        el.style.top = "40%";
+        el.style.opacity = "0";
+      }, 50);
+
+      setTimeout(() => el.remove(), 600);
+    }
+
+    // Reload Mechanic
+    function reloadWeapon() {
+      if (isReloading || currentAmmo === currentSelectedWeapon.ammo) return;
+      isReloading = true;
+
+      document.getElementById('reloadIndicator').classList.remove('hidden');
+
+      setTimeout(() => {
+        currentAmmo = currentSelectedWeapon.ammo;
+        isReloading = false;
+        document.getElementById('reloadIndicator').classList.add('hidden');
+        updateHUD();
+      }, 1500);
+    }
+
+    // Toggle Sniper Scope Overlay
+    function toggleScope() {
+      if (['marshal', 'outlaw', 'operator'].includes(currentSelectedWeapon.id)) {
+        isScoped = !isScoped;
+        const scope = document.getElementById('scopeOverlay');
+        scope.style.display = isScoped ? 'block' : 'none';
+        camera.fov = isScoped ? 25 : 75;
+        camera.updateProjectionMatrix();
+      }
+    }
+
+    // Trigger Visual 3D Ability Effects
+    function triggerAbilityEffect(key) {
+      const ability = currentSelectedAgent.abilities[key];
+      if (!ability) return;
+
+      // Create glowing 3D sphere/wall in front of player
+      const sphereGeo = new THREE.SphereGeometry(2, 16, 16);
+      const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00F0FF, wireframe: true, transparent: true, opacity: 0.8 });
+      const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      sphere.position.copy(camera.position).add(dir.multiplyScalar(5));
+
+      scene.add(sphere);
+
+      // Animate expansion
+      let scale = 1;
+      const interval = setInterval(() => {
+        scale += 0.2;
+        sphere.scale.set(scale, scale, scale);
+        if (scale > 3) {
+          clearInterval(interval);
+          scene.remove(sphere);
+        }
+      }, 50);
+
+      showDamageNumber(`[${key}] ${ability.name.toUpperCase()}`, '#FF4655');
+    }
+
+    /* Initialize Default View */
+    window.onload = function() {
+      renderAgents('ALL');
+      renderWeapons('ALL');
+    };
   </script>
 </body>
 </html>

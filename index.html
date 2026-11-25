@@ -3,31 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VALORANT Protocol | Manual de Integração & Visual Range 3D</title>
+  <title>NexaOS — Apresentação Interativa do Novo Sistema Operacional</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Three.js Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
-          colors: {
-            valRed: '#FF4655',
-            valDark: '#0F1923',
-            valDarkAlt: '#1F2326',
-            valCyan: '#00F0FF',
-            valGold: '#ECE8E1',
-            valYellow: '#FFD700',
-            valGrey: '#768079'
-          },
           fontFamily: {
-            valFont: ['Tungsten', 'Impact', 'sans-serif'],
-            sans: ['Inter', 'sans-serif']
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
           }
         }
       }
@@ -35,1692 +35,1660 @@
   </script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
-
-    body {
-      background-color: #0F1923;
-      color: #ECE8E1;
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-      user-select: none;
+    /* Modos de Acessibilidade em Tempo Real (Slide 7) */
+    body.high-contrast {
+      background-color: #000000 !important;
+      color: #ffff00 !important;
+    }
+    body.high-contrast .slide-container,
+    body.high-contrast .glass-panel,
+    body.high-contrast header,
+    body.high-contrast footer {
+      background: #000000 !important;
+      border: 2px solid #ffff00 !important;
+      color: #ffff00 !important;
+      box-shadow: none !important;
+    }
+    body.high-contrast p, 
+    body.high-contrast span, 
+    body.high-contrast h1, 
+    body.high-contrast h2, 
+    body.high-contrast h3,
+    body.high-contrast li {
+      color: #ffff00 !important;
     }
 
-    /* Custom VALORANT Angled Aesthetics */
-    .val-cut {
-      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    body.large-font {
+      font-size: 115%;
     }
-    .val-cut-top {
-      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-    }
-    .val-btn-red {
-      background-color: #FF4655;
-      color: #FFF;
-      position: relative;
-      transition: all 0.2s ease;
-      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-    }
-    .val-btn-red:hover {
-      background-color: #E03E4C;
-      box-shadow: 0 0 12px rgba(255, 70, 85, 0.6);
-      transform: translateY(-1px);
+    body.large-font .text-xs { font-size: 0.92rem !important; }
+    body.large-font .text-sm { font-size: 1.05rem !important; }
+    body.large-font .text-base { font-size: 1.2rem !important; }
+
+    /* Modo Leitura Guiada / Foco */
+    body.reading-guide .slide-container {
+      line-height: 1.85 !important;
+      letter-spacing: 0.02em !important;
+      background: rgba(15, 23, 42, 0.96) !important;
     }
 
-    /* Custom Scrollbar */
+    /* Transição suave entre slides */
+    .slide-container {
+      transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .slide-hidden {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px) scale(0.99);
+    }
+    .slide-active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Scrollbar customizada */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0F1923;
+      background: rgba(15, 23, 42, 0.4);
     }
     ::-webkit-scrollbar-thumb {
-      background: #FF4655;
-      border-radius: 2px;
+      background: rgba(6, 182, 212, 0.5);
+      border-radius: 9999px;
     }
-
-    /* Crosshair & Scope Overlay */
-    #crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 12px;
-      height: 12px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 30;
-    }
-    .ch-dot {
-      width: 4px;
-      height: 4px;
-      background: #00F0FF;
-      border-radius: 50%;
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      box-shadow: 0 0 4px #00F0FF;
-    }
-
-    /* Scope overlay */
-    #scopeOverlay {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, transparent 30%, black 70%);
-      display: none;
-      pointer-events: none;
-      z-index: 25;
-    }
-    #scopeCrosshair {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none;
-    }
-    #scopeCrosshair::before {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0; left: 50%;
-      width: 1px;
-      background: rgba(255, 70, 85, 0.8);
-    }
-    #scopeCrosshair::after {
-      content: '';
-      position: absolute;
-      left: 0; right: 0; top: 50%;
-      height: 1px;
-      background: rgba(255, 70, 85, 0.8);
-    }
-
-    /* Hit Marker */
-    .hit-marker {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 24px;
-      height: 24px;
-      transform: translate(-50%, -50%) rotate(45deg);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.1s ease;
-      z-index: 31;
-    }
-    .hit-marker-line {
-      position: absolute;
-      background: #FF4655;
-    }
-
-    /* Glowing Text Effects */
-    .glow-cyan {
-      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-    }
-    .glow-red {
-      text-shadow: 0 0 10px rgba(255, 70, 85, 0.6);
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(6, 182, 212, 0.85);
     }
   </style>
 </head>
-<body class="bg-valDark text-valGold min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950 overflow-x-hidden">
 
-  <!-- TOP NAVIGATION HEADER -->
-  <header class="bg-valDarkAlt border-b-2 border-valRed px-6 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xl">
-    <div class="flex items-center space-x-4">
-      <div class="w-10 h-10 bg-valRed flex items-center justify-center font-black text-2xl text-valDark val-cut">
-        V
+  <!-- Fundo Decorativo Futurista -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 -right-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- BARRA SUPERIOR DE CONTROLE -->
+  <header class="sticky top-0 z-40 bg-slate-900/85 backdrop-blur-md border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-3">
+      <!-- Mini Logo Hexagonal NexaOS -->
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/25">
+        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/>
+          <path d="M8 15V9l8 6V9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
       <div>
-        <h1 class="text-xl font-black tracking-widest text-white uppercase flex items-center gap-2">
-          VALORANT <span class="text-valRed">PROTOCOL</span>
-        </h1>
-        <p class="text-xs text-valGrey font-mono tracking-wider">INTEL MANUAL & INTERACTIVE 3D RANGE v4.0</p>
+        <div class="flex items-center gap-2">
+          <span class="font-display font-bold text-sm sm:text-base tracking-tight text-white">NexaOS</span>
+          <span id="top-slide-badge" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Slide 1 de 10</span>
+        </div>
+        <span class="hidden md:inline-block text-[11px] text-slate-400">Atividade: Criando um Novo Sistema Operacional</span>
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <nav class="flex items-center space-x-2">
-      <button id="tabManualBtn" onclick="switchTab('manual')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut">
-        <i class="fa-solid fa-book-open mr-2"></i> Manual de Integração
+    <!-- Controles Rápidos do Topo -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- Botão Todos os Slides -->
+      <button id="btn-grid-view" onclick="toggleGridView()" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 cursor-pointer" title="Ver grade com todos os 10 slides">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span id="grid-btn-text">Todos os Slides</span>
       </button>
-      <button id="tabAgentsBtn" onclick="switchTab('agents')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">
-        <i class="fa-solid fa-users mr-2"></i> Agentes (<span id="agentCountBadge">25</span>)
+
+      <!-- Botão Copiar Código -->
+      <button onclick="copyFullSourceCode()" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5 cursor-pointer" title="Copiar código-fonte HTML/JS completo">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span class="hidden sm:inline">Copiar Código</span>
       </button>
-      <button id="tabWeaponsBtn" onclick="switchTab('weapons')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">
-        <i class="fa-solid fa-gun mr-2"></i> Arsenal (<span id="weaponCountBadge">18</span>)
+
+      <!-- Botão Tela Cheia -->
+      <button onclick="toggleFullscreen()" class="p-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-600/25 transition cursor-pointer" title="Modo Tela Cheia">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
       </button>
-      <button id="tabRangeBtn" onclick="switchTab('range')" class="px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valCyan/50 text-valCyan hover:bg-valCyan/10 val-cut">
-        <i class="fa-solid fa-crosshairs mr-2"></i> Range 3D
-      </button>
-    </nav>
+    </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 relative overflow-y-auto">
+  <!-- Barra de Progresso -->
+  <div class="w-full h-1 bg-slate-800">
+    <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-emerald-400 transition-all duration-300" style="width: 10%;"></div>
+  </div>
 
-    <!-- ==================== SECTION 1: MANUAL DE INTEGRAÇÃO ==================== -->
-    <section id="sectionManual" class="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
-      
-      <!-- HERO / INTRO -->
-      <div class="relative bg-valDarkAlt border border-valRed/30 p-8 rounded-lg val-cut overflow-hidden shadow-2xl">
-        <div class="absolute -right-12 -bottom-12 opacity-10 text-9xl text-valRed font-black">RIOT</div>
-        <div class="relative z-10 max-w-3xl">
-          <span class="inline-block px-3 py-1 bg-valRed/20 border border-valRed text-valRed text-xs font-mono tracking-widest uppercase mb-3">
-            SECRETO // VALORANT PROTOCOL HQ
-          </span>
-          <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
-            MANUAL DE INTEGRAÇÃO DO <span class="text-valRed">AGENTE PROTOCOLO</span>
-          </h2>
-          <p class="text-gray-300 leading-relaxed text-base">
-            Bem-vindo ao Protocolo VALORANT. Este documento contém as diretrizes táticas, normas institucionais, cultura corporativa e expectativas de conduta para todos os Operadores, Radiantes e Especialistas Integrados à Riot Games / Valorant HQ.
+  <!-- PALCO PRINCIPAL DA APRESENTAÇÃO -->
+  <main id="presentation-stage" class="flex-1 flex items-center justify-center p-3 sm:p-6 md:p-8 max-w-6xl w-full mx-auto">
+
+    <!-- ==================== SLIDE 1: NOME DO SISTEMA OPERACIONAL ==================== -->
+    <section data-slide="1" data-title="Nome do Sistema Operacional" class="slide-container slide-active w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 md:p-12 flex-col justify-between relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Slide 01 • Identidade do SO</span>
+        <span class="text-xs text-slate-400 font-mono">NexaCore v2.0 • Microkernel</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-4">
+        <div class="lg:col-span-6 space-y-4 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            Nova Arquitetura Operacional Híbrida
+          </div>
+          <h1 class="font-display text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-white via-cyan-200 to-indigo-400 bg-clip-text text-transparent">
+            NexaOS
+          </h1>
+          <p class="text-xl sm:text-2xl font-semibold text-cyan-300">
+            “Inteligência fluida em cada tela.”
           </p>
-        </div>
-      </div>
-
-      <!-- SEÇÕES DO MANUAL -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        <!-- 1. Apresentação da Empresa -->
-        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
-          <div class="flex items-center space-x-3 mb-3">
-            <i class="fa-solid fa-building text-2xl text-valRed group-hover:text-valCyan"></i>
-            <h3 class="text-xl font-bold uppercase tracking-wider text-white">1. Apresentação da Empresa</h3>
-          </div>
-          <p class="text-sm text-gray-300 leading-relaxed mb-3">
-            O **Protocolo VALORANT** é uma organização de defesa global de alto risco operada em sigilo absoluto sob diretrizes de liderança tática da Riot Games.
+          <p class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            Criado para conectar dispositivos, pessoas e ideias com velocidade instantânea, segurança blindada e inteligência artificial integrada diretamente ao núcleo.
           </p>
-          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
-            <li>Fundação: Pós-evento Primeira Luz (First Light).</li>
-            <li>Missão: Proteger a Terra e a Radianita contra ameaças interdimensionais e invasores da Terra-2.</li>
-            <li>Visão: Excelência tática, integração tecnológica e coordenação global sem fronteiras.</li>
-          </ul>
-        </div>
 
-        <!-- 2. Regras de Convivência no Time -->
-        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
-          <div class="flex items-center space-x-3 mb-3">
-            <i class="fa-solid fa-handshake text-2xl text-valRed group-hover:text-valCyan"></i>
-            <h3 class="text-xl font-bold uppercase tracking-wider text-white">2. Convivência no Time</h3>
-          </div>
-          <p class="text-sm text-gray-300 leading-relaxed mb-3">
-            A diversidade de origens, poderes Radiantes e especialidades militares é nossa maior força. O respeito mutuo é inegociável.
-          </p>
-          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
-            <li>Zero tolerância para toxicidade, preconceito ou insubordinação.</li>
-            <li>Suporte constante ao colega de equipe (Trade Kills, Cobertura e Utilitários).</li>
-            <li>Resolução direta e madura de divergências táticas após as operações.</li>
-          </ul>
-        </div>
-
-        <!-- 3. Horários, Frequência e Rotina -->
-        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
-          <div class="flex items-center space-x-3 mb-3">
-            <i class="fa-solid fa-clock text-2xl text-valRed group-hover:text-valCyan"></i>
-            <h3 class="text-xl font-bold uppercase tracking-wider text-white">3. Horários & Rotina de Treino</h3>
-          </div>
-          <p class="text-sm text-gray-300 leading-relaxed mb-3">
-            A prontidão tática exige disciplina diária no Range de Treinamento e nas reuniões de análise (Briefings).
-          </p>
-          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
-            <li>08:00 - Aquecimento de Mira & Treino Físico (The Range).</li>
-            <li>10:00 - Briefing Tático e Análise de VODs da Terra-2.</li>
-            <li>14:00 às 18:00 - Simulados de Confronto Tático & Treino de Retake.</li>
-            <li>Pontualidade e 100% de presença são monitorados pela IA de Brik.</li>
-          </ul>
-        </div>
-
-        <!-- 4. Cuidados com Documentos & Segredos -->
-        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
-          <div class="flex items-center space-x-3 mb-3">
-            <i class="fa-solid fa-user-shield text-2xl text-valRed group-hover:text-valCyan"></i>
-            <h3 class="text-xl font-bold uppercase tracking-wider text-white">4. Segredos do Protocolo</h3>
-          </div>
-          <p class="text-sm text-gray-300 leading-relaxed mb-3">
-            As tecnologias de Radianita, coordenadas dos quartéis e registros de identidade são de **Nível de Acesso Ômega**.
-          </p>
-          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
-            <li>Proibida a transmissão de dados fora de redes criptografadas da Kingdom/Protocol.</li>
-            <li>Vazamentos resultam em prisão imediata e neutralização tática.</li>
-            <li>Dispositivos pessoais devem permanecer em cofres Faraday na entrada.</li>
-          </ul>
-        </div>
-
-        <!-- 5. Normas Básicas de Segurança Tática -->
-        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
-          <div class="flex items-center space-x-3 mb-3">
-            <i class="fa-solid fa-shield-halved text-2xl text-valRed group-hover:text-valCyan"></i>
-            <h3 class="text-xl font-bold uppercase tracking-wider text-white">5. Segurança Tática</h3>
-          </div>
-          <p class="text-sm text-gray-300 leading-relaxed mb-3">
-            Mantenha equipamentos e utilitários radiantes sob estrito controle para evitar acidentes no QG.
-          </p>
-          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
-            <li>Travar a trava de segurança de armas fora da zona de tiro.</li>
-            <li>Manipulação de Radianita pura exige equipamento de proteção bioclástica.</li>
-            <li>Proibido o uso de habilidades Radiantes ofensivas fora de áreas autorizadas.</li>
-          </ul>
-        </div>
-
-        <!-- 6. Orientações sobre Comunicação -->
-        <div class="bg-valDarkAlt border-l-4 border-valRed p-6 val-cut relative group hover:border-valCyan transition-all">
-          <div class="flex items-center space-x-3 mb-3">
-            <i class="fa-solid fa-headset text-2xl text-valRed group-hover:text-valCyan"></i>
-            <h3 class="text-xl font-bold uppercase tracking-wider text-white">6. Comunicação Rádio & Voz</h3>
-          </div>
-          <p class="text-sm text-gray-300 leading-relaxed mb-3">
-            Comunicação clara, curta e sem ruídos salva vidas no campo de batalha e no ambiente de escritório.
-          </p>
-          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
-            <li>Utilize chamadas de mapa padronizadas (Callouts: A Main, Heaven, Hell, Elbow).</li>
-            <li>Informe Dano Causado, Posição Inimiga e Economia antes de cada rodada.</li>
-            <li>Comunicação limpa durante momentos cruciais de Clutch (Silêncio de Rádio).</li>
-          </ul>
-        </div>
-
-      </div>
-
-      <!-- 7. CINCO ATITUDES ESPERADAS DO AGENTE EXCELENTE -->
-      <div class="bg-valDarkAlt border border-valCyan/30 p-8 rounded-lg val-cut">
-        <div class="flex items-center space-x-3 mb-6 border-b border-valCyan/20 pb-4">
-          <i class="fa-solid fa-star text-3xl text-valCyan glow-cyan"></i>
-          <div>
-            <h3 class="text-2xl font-black uppercase text-white tracking-wider">7. As 5 Atitudes Esperadas do Agente Excelente</h3>
-            <p class="text-xs text-valCyan font-mono">PILARES FUNDAMENTAIS DE DESEMPENHO NO PROTOCOLO</p>
+          <!-- Botão Interativo: Origem do Nome & Arquitetura -->
+          <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+            <button onclick="openDetailModal('s1_origem')" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-cyan-500/25 transition flex items-center gap-2 cursor-pointer">
+              <span>🔍 Origem do Nome & Arquitetura</span>
+            </button>
+            <button onclick="openDetailModal('s1_kernel')" class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-semibold text-xs sm:text-sm transition cursor-pointer">
+              ⚙️ Entenda o Núcleo NexaCore
+            </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div class="bg-valDark p-4 border-t-2 border-valRed val-cut">
-            <div class="text-valRed font-black text-2xl mb-1">01</div>
-            <h4 class="font-bold text-white mb-2 uppercase text-sm">Resiliência Absoluta</h4>
-            <p class="text-xs text-gray-400 leading-relaxed">Capacidade de adaptar estratégias e manter o foco mesmo em desvantagem no placar (12-4).</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-t-2 border-valCyan val-cut">
-            <div class="text-valCyan font-black text-2xl mb-1">02</div>
-            <h4 class="font-bold text-white mb-2 uppercase text-sm">Empatia & Trade</h4>
-            <p class="text-xs text-gray-400 leading-relaxed">Priorizar a vitória coletiva sobre estatísticas pessoais (KD). Morrer para garantir a troca é honroso.</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-t-2 border-valYellow val-cut">
-            <div class="text-valYellow font-black text-2xl mb-1">03</div>
-            <h4 class="font-bold text-white mb-2 uppercase text-sm">Comunicação Proativa</h4>
-            <p class="text-xs text-gray-400 leading-relaxed">Repassar informações vitais instantaneamente sem hesitação ou reclamações no microfone.</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-t-2 border-purple-500 val-cut">
-            <div class="text-purple-400 font-black text-2xl mb-1">04</div>
-            <h4 class="font-bold text-white mb-2 uppercase text-sm">Domínio de Utilitários</h4>
-            <p class="text-xs text-gray-400 leading-relaxed">Conhecer o timing, lineups e sinergias das habilidades de seu Agente perfeitamente.</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-t-2 border-green-500 val-cut">
-            <div class="text-green-400 font-black text-2xl mb-1">05</div>
-            <h4 class="font-bold text-white mb-2 uppercase text-sm">Disciplina Econômica</h4>
-            <p class="text-xs text-gray-400 leading-relaxed">Respeitar as chamadas de Eco, Semi-Buy e Full-Buy juntamente com o IGL da equipe.</p>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ==================== SECTION 2: ROSTER COMPLETO DE AGENTES ==================== -->
-    <section id="sectionAgents" class="p-6 md:p-10 max-w-7xl mx-auto space-y-8 hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-valGrey/20 pb-6">
-        <div>
-          <h2 class="text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3">
-            ROSTER COMPLETO DE AGENTES <span class="text-valRed text-lg font-mono font-normal">(25 AGENTES)</span>
-          </h2>
-          <p class="text-sm text-gray-400">Selecione um agente para inspecionar bio, classe e kit de habilidades (C, Q, E, X).</p>
-        </div>
-
-        <!-- Role Filters -->
-        <div class="flex flex-wrap gap-2" id="roleFilters">
-          <button onclick="filterAgents('ALL')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valRed text-white val-cut">Todos</button>
-          <button onclick="filterAgents('Duelist')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Duelistas</button>
-          <button onclick="filterAgents('Initiator')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Iniciadores</button>
-          <button onclick="filterAgents('Controller')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Controladores</button>
-          <button onclick="filterAgents('Sentinel')" class="agent-filter-btn px-4 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Sentinelas</button>
-        </div>
-      </div>
-
-      <!-- Agent Cards Grid -->
-      <div id="agentsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <!-- JS injected agents cards -->
-      </div>
-    </section>
-
-    <!-- ==================== SECTION 3: ARSENAL COMPLETO DE ARMAS ==================== -->
-    <section id="sectionWeapons" class="p-6 md:p-10 max-w-7xl mx-auto space-y-8 hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-valGrey/20 pb-6">
-        <div>
-          <h2 class="text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3">
-            ARSENAL COMPLETO VALORANT <span class="text-valRed text-lg font-mono font-normal">(18 ARMAS)</span>
-          </h2>
-          <p class="text-sm text-gray-400">Todas as estatísticas oficiais: Dano, Taxa de Disparo, Pente, Custo e Modo de Disparo.</p>
-        </div>
-
-        <!-- Weapon Category Filters -->
-        <div class="flex flex-wrap gap-2" id="weaponFilters">
-          <button onclick="filterWeapons('ALL')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valRed text-white val-cut">Todas</button>
-          <button onclick="filterWeapons('Sidearms')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Leves</button>
-          <button onclick="filterWeapons('SMGs')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Submetralhadoras</button>
-          <button onclick="filterWeapons('Shotguns')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Escopetas</button>
-          <button onclick="filterWeapons('Rifles')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Fuzis</button>
-          <button onclick="filterWeapons('Snipers')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Snipers</button>
-          <button onclick="filterWeapons('Heavy')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Pesadas</button>
-          <button onclick="filterWeapons('Melee')" class="weapon-filter-btn px-3 py-1.5 text-xs font-bold uppercase bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut">Corpo a Corpo</button>
-        </div>
-      </div>
-
-      <!-- Weapons Cards Grid -->
-      <div id="weaponsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- JS injected weapon cards -->
-      </div>
-    </section>
-
-    <!-- ==================== SECTION 4: 3D INTERACTIVE RANGE SIMULATOR ==================== -->
-    <section id="sectionRange" class="w-full h-[calc(100vh-65px)] relative hidden bg-black overflow-hidden">
-      
-      <!-- Canvas 3D -->
-      <canvas id="rangeCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-
-      <!-- Scope Overlay -->
-      <div id="scopeOverlay">
-        <div id="scopeCrosshair"></div>
-      </div>
-
-      <!-- HUD UI OVERLAY -->
-      <div class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between z-20">
-        
-        <!-- TOP HUD: Stats & Game Info -->
-        <div class="flex items-start justify-between">
-          <div class="bg-valDark/80 backdrop-blur border border-valRed/40 p-4 val-cut pointer-events-auto">
-            <div class="text-xs text-valGrey uppercase font-mono mb-1">ESTATÍSTICAS DO RANGE</div>
-            <div class="flex items-center gap-6">
-              <div>
-                <span class="text-xs text-gray-400 block">KILLS</span>
-                <span id="statKills" class="text-2xl font-black text-white">0</span>
-              </div>
-              <div>
-                <span class="text-xs text-gray-400 block">HEADSHOTS</span>
-                <span id="statHeadshots" class="text-2xl font-black text-valCyan">0</span>
-              </div>
-              <div>
-                <span class="text-xs text-gray-400 block">PRECISÃO</span>
-                <span id="statAccuracy" class="text-2xl font-black text-valYellow">100%</span>
+        <!-- Logotipo Hexagonal Geométrico NexaOS + Imagem Futurista -->
+        <div class="lg:col-span-6 flex justify-center">
+          <div class="relative w-full max-w-md h-64 sm:h-72 rounded-3xl overflow-hidden border border-cyan-500/40 shadow-2xl group">
+            <img
+              src="https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&w=900&q=80"
+              alt="Rede neural hexagonal futurista representando o NexaOS"
+              data-fallback-theme="logo"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover opacity-55 group-hover:scale-105 transition duration-700"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/45 to-transparent"></div>
+            
+            <!-- Logotipo Hexagonal/Nexus Central -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center p-4 animate-float">
+              <div class="w-36 h-36 sm:w-40 sm:h-40 rounded-3xl bg-slate-900/90 backdrop-blur-md border border-cyan-400/50 shadow-2xl flex flex-col items-center justify-center p-3">
+                <svg class="w-24 h-24" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="nexaGrad" x1="15" y1="15" x2="105" y2="105" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#22D3EE"/>
+                      <stop offset="50%" stop-color="#6366F1"/>
+                      <stop offset="100%" stop-color="#10B981"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Hexágono Externo -->
+                  <polygon points="60,10 104,35 104,85 60,110 16,85 16,35" stroke="url(#nexaGrad)" stroke-width="5" fill="rgba(34,211,238,0.08)"/>
+                  <!-- Hexágono Interno Conectado -->
+                  <polygon points="60,26 90,43 90,77 60,94 30,77 30,43" stroke="#22D3EE" stroke-width="2" stroke-opacity="0.5"/>
+                  <!-- Letra N Geométrica -->
+                  <path d="M44 76V44L76 76V44" stroke="url(#nexaGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Nós de Conexão -->
+                  <circle cx="44" cy="44" r="4" fill="#FFFFFF"/>
+                  <circle cx="76" cy="76" r="4" fill="#10B981"/>
+                </svg>
+                <span class="mt-1 font-display font-extrabold text-xs tracking-[0.25em] text-cyan-300">NEXA OS</span>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Quick Controls Overlay Help -->
-          <div class="bg-valDark/80 backdrop-blur border border-valGrey/30 p-4 val-cut text-right pointer-events-auto">
-            <div class="text-xs text-valCyan font-mono font-bold uppercase mb-1">CONTROLES TÁTICOS</div>
-            <div class="text-xs text-gray-300 space-y-0.5 font-mono">
-              <p><span class="text-valRed">[CLIQUE]</span> Travar Mira na Tela</p>
-              <p><span class="text-valRed">[WASD]</span> Mover | <span class="text-valRed">[ESPAÇO]</span> Pular</p>
-              <p><span class="text-valRed">[B]</span> Loja de Armas | <span class="text-valRed">[F2]</span> Trocar Agente</p>
-              <p><span class="text-valRed">[R]</span> Recarregar | <span class="text-valRed">[E/C/Q/X]</span> Habilidades</p>
-            </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-slate-800/80 pt-3">
+        <span>Clique nos botões em cada slide para explorar os detalhes técnicos</span>
+        <span class="text-cyan-400 font-semibold">Slide 1 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 2: TIPO DE DISPOSITIVO ==================== -->
+    <section data-slide="2" data-title="Tipo de Dispositivo" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Slide 02 • Tipo de Dispositivo</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Um Núcleo. <span class="text-cyan-400">Todos os Dispositivos.</span></h2>
+          <p class="text-slate-300 text-xs sm:text-sm">
+            Selecione um dispositivo abaixo para testar como o <strong>NexaFlex UI</strong> adapta automaticamente tela, RAM e controles:
+          </p>
+          <!-- Botões Interativos para Trocar Dispositivo -->
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="selectDeviceMode('pc')" id="dev-btn-pc" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition cursor-pointer">💻 PC / Notebook</button>
+            <button onclick="selectDeviceMode('phone')" id="dev-btn-phone" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">📱 Smartphone</button>
+            <button onclick="selectDeviceMode('console')" id="dev-btn-console" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">🎮 Videogame</button>
+            <button onclick="selectDeviceMode('tablet')" id="dev-btn-tablet" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">📟 Tablet</button>
           </div>
         </div>
 
-        <!-- CENTER START LOCK PROMPT -->
-        <div id="lockPrompt" class="self-center bg-valDark/90 border-2 border-valRed p-6 val-cut text-center pointer-events-auto shadow-2xl animate-pulse">
-          <i class="fa-solid fa-crosshairs text-4xl text-valRed mb-2"></i>
-          <h3 class="text-2xl font-black text-white uppercase tracking-wider">CLIQUE NA TELA PARA JOGAR</h3>
-          <p class="text-xs text-gray-300 font-mono mt-1">SISTEMA DE CONTROLE FPS (POINTER LOCK)</p>
+        <!-- Imagem dos Dispositivos -->
+        <div class="lg:col-span-5">
+          <div class="relative h-40 sm:h-44 rounded-2xl overflow-hidden border border-cyan-500/35 shadow-lg">
+            <img
+              src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80"
+              alt="Computadores, smartphones e tablets rodando NexaOS"
+              data-fallback-theme="devices"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end justify-between p-3">
+              <span class="text-xs font-semibold text-cyan-300">Ecossistema NexaFlex</span>
+              <button onclick="openDetailModal('s2_adaptacao')" class="px-2.5 py-1 rounded-lg bg-cyan-500/90 hover:bg-cyan-400 text-slate-950 font-bold text-[11px] cursor-pointer">
+                Ver Adaptação de Tela
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel Dinâmico do Dispositivo Selecionado -->
+      <div id="device-inspector-panel" class="glass-panel rounded-2xl bg-slate-800/70 border border-cyan-500/40 p-5 my-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        <div class="md:col-span-8 space-y-1.5">
+          <div class="flex items-center gap-2">
+            <span id="dev-icon" class="text-2xl">💻</span>
+            <h3 id="dev-title" class="font-display font-bold text-xl text-white">Modo Desktop & Notebook</h3>
+            <span id="dev-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/20 text-cyan-300">Multitarefa Completa</span>
+          </div>
+          <p id="dev-desc" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Interface com múltiplas janelas flutuantes, barra de tarefas inteligente, suporte a até 4 monitores 8K e atalhos profissionais de teclado.
+          </p>
+        </div>
+        <div class="md:col-span-4 bg-slate-950/70 rounded-xl p-3.5 border border-slate-700/80 space-y-2 text-xs">
+          <div class="flex justify-between"><span class="text-slate-400">Consumo Base RAM:</span><span id="dev-ram" class="font-bold text-emerald-400">1.1 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Entrada Principal:</span><span id="dev-input" class="font-bold text-cyan-300">Mouse, Teclado & Touch</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Sincronia Nuvem:</span><span class="font-bold text-indigo-300">Instantânea (NexaLink)</span></div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
+        <span>✨ Um único sistema operacional para todos os seus aparelhos</span>
+        <span class="text-cyan-400 font-semibold">Slide 2 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 3: DIFERENCIAIS DO SISTEMA ==================== -->
+    <section data-slide="3" data-title="Diferenciais do Sistema" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Slide 03 • Diferenciais Tecnológicos</span>
+          <span class="text-xs text-slate-400">O que torna o NexaOS único</span>
+        </div>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Por que o NexaOS é <span class="text-cyan-400">mais moderno e útil?</span></h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 my-4 items-stretch">
+        <!-- Imagem de Inovação -->
+        <div class="lg:col-span-4 relative rounded-2xl overflow-hidden border border-indigo-500/35 min-h-[200px] shadow-xl">
+          <img
+            src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80"
+            alt="Inovação e Inteligência Artificial no NexaOS"
+            data-fallback-theme="innovation"
+            onerror="handleImageFallback(this)"
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent flex flex-col justify-end p-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">NexaMind Engine</span>
+            <p class="text-xs text-slate-200 mt-1">Inovação real que antecipa suas tarefas sem comprometer sua privacidade.</p>
+          </div>
         </div>
 
-        <!-- BOTTOM HUD: Ammo & Abilities -->
-        <div class="flex items-end justify-between">
-          
-          <!-- Selected Agent Info & Skill Hotline -->
-          <div class="bg-valDark/90 border border-valCyan/40 p-4 val-cut pointer-events-auto flex items-center space-x-6">
+        <!-- 3 Cards de Diferenciais com Botões "Saiba Mais" -->
+        <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex flex-col justify-between">
             <div>
-              <div id="hudAgentRole" class="text-xs text-valCyan font-mono uppercase">DUELISTA</div>
-              <div id="hudAgentName" class="text-3xl font-black text-white uppercase">JETT</div>
+              <div class="w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xl mb-3">🧠</div>
+              <h3 class="font-display font-bold text-base text-white">IA Nativa Offline</h3>
+              <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                A assistente <strong>NexaMind</strong> resume documentos, organiza pastas e traduz áudios mesmo sem internet.
+              </p>
             </div>
-
-            <!-- Ability Buttons UI -->
-            <div class="flex items-center space-x-3 border-l border-valGrey/30 pl-6">
-              <div class="text-center">
-                <div id="btnAbilityC" class="w-12 h-12 bg-valDarkAlt border border-valGrey/40 flex items-center justify-center font-black text-white val-cut text-lg">C</div>
-                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Tática</span>
-              </div>
-              <div class="text-center">
-                <div id="btnAbilityQ" class="w-12 h-12 bg-valDarkAlt border border-valGrey/40 flex items-center justify-center font-black text-white val-cut text-lg">Q</div>
-                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Assinatura</span>
-              </div>
-              <div class="text-center">
-                <div id="btnAbilityE" class="w-12 h-12 bg-valDarkAlt border border-valCyan flex items-center justify-center font-black text-valCyan val-cut text-lg">E</div>
-                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Especial</span>
-              </div>
-              <div class="text-center">
-                <div id="btnAbilityX" class="w-12 h-12 bg-valDarkAlt border border-valYellow flex items-center justify-center font-black text-valYellow val-cut text-lg">X</div>
-                <span class="text-[10px] text-gray-400 uppercase mt-1 block">Ultimate</span>
-              </div>
-            </div>
+            <button onclick="openDetailModal('s3_ia')" class="mt-4 w-full py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition cursor-pointer">
+              Saiba Mais →
+            </button>
           </div>
 
-          <!-- Selected Weapon Ammo Counter -->
-          <div class="bg-valDark/90 border border-valRed/50 p-4 val-cut pointer-events-auto text-right min-w-[200px]">
-            <div id="hudWeaponName" class="text-sm font-bold text-valRed uppercase tracking-wider">VANDAL</div>
-            <div class="flex items-baseline justify-end space-x-2">
-              <span id="hudCurrentAmmo" class="text-5xl font-black text-white">30</span>
-              <span class="text-xl text-valGrey font-bold">/</span>
-              <span id="hudReserveAmmo" class="text-xl font-bold text-gray-400">90</span>
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex flex-col justify-between">
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-xl mb-3">☁️</div>
+              <h3 class="font-display font-bold text-base text-white">Nuvem Híbrida Instantânea</h3>
+              <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                Seus arquivos aparecem em todos os aparelhos em tempo real, ocupando quase zero espaço no disco local.
+              </p>
             </div>
-            <div id="reloadIndicator" class="text-xs text-valYellow font-mono mt-1 hidden">RECARREGANDO...</div>
+            <button onclick="openDetailModal('s3_nuvem')" class="mt-4 w-full py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition cursor-pointer">
+              Saiba Mais →
+            </button>
           </div>
 
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex flex-col justify-between">
+            <div>
+              <div class="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xl mb-3">⚡</div>
+              <h3 class="font-display font-bold text-base text-white">Zero Lentidão</h3>
+              <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                Sem registro fragmentado e sem processos inúteis. O sistema mantém a mesma rapidez após anos de uso.
+              </p>
+            </div>
+            <button onclick="openDetailModal('s3_velocidade')" class="mt-4 w-full py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition cursor-pointer">
+              Saiba Mais →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Clique em "Saiba Mais" em qualquer diferencial para ver detalhes técnicos</span>
+        <span class="text-cyan-400 font-semibold">Slide 3 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 4: INTERFACE GRÁFICA ==================== -->
+    <section data-slide="4" data-title="Interface Gráfica" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-5 sm:p-8 flex-col justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div>
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Slide 04 • Interface Gráfica</span>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mt-1">Tela Inicial & Ícones Interativos do NexaOS</h2>
+        </div>
+        <button onclick="openDetailModal('s4_interface')" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition cursor-pointer">
+          ✨ Explorar Recursos da Interface
+        </button>
+      </div>
+
+      <!-- MOCKUP INTERATIVO DA ÁREA DE TRABALHO DO NEXAOS -->
+      <div class="w-full h-80 sm:h-96 rounded-2xl border-2 border-slate-700/90 shadow-inner relative overflow-hidden flex flex-col justify-between p-4 select-none">
+        <!-- Wallpaper Gráfico Temático -->
+        <img
+          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
+          alt="Wallpaper fluido da interface gráfica do NexaOS"
+          data-fallback-theme="interface"
+          onerror="handleImageFallback(this)"
+          class="absolute inset-0 w-full h-full object-cover opacity-55 -z-10"
+        />
+        <div class="absolute inset-0 bg-slate-950/45 -z-10"></div>
+
+        <!-- Barra Superior do NexaOS -->
+        <div class="flex items-center justify-between bg-slate-950/75 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/15 text-xs text-slate-200">
+          <div class="flex items-center gap-2 font-bold">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+            <span class="text-cyan-300">NexaOS</span>
+            <span id="os-active-app-label" class="text-slate-300 font-normal ml-2">Área de Trabalho</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="hidden sm:inline text-emerald-300">🛡️ Protegido</span>
+            <span>📶 Wi-Fi 7</span>
+            <span id="os-live-clock" class="font-mono font-bold text-cyan-300">16:24</span>
+          </div>
         </div>
 
+        <!-- Área Central: Widgets + Janela Simulada -->
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-3 my-3 items-center">
+          <div class="sm:col-span-4 space-y-2.5">
+            <div class="bg-slate-950/65 backdrop-blur-md border border-white/15 rounded-2xl p-3">
+              <div class="text-[11px] uppercase tracking-wider text-cyan-300 font-bold">Widget IA Nexa</div>
+              <p class="text-xs text-slate-200 mt-1">“Tudo pronto! Clique nos ícones abaixo para abrir aplicativos do sistema.”</p>
+            </div>
+            <div class="bg-slate-950/65 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex items-center justify-between">
+              <div>
+                <div class="text-[11px] text-slate-300">Desempenho</div>
+                <div class="text-sm font-bold text-emerald-400">CPU 8% • RAM 1.1GB</div>
+              </div>
+              <span class="text-xl">🚀</span>
+            </div>
+          </div>
+
+          <!-- Janela Flutuante Interativa -->
+          <div class="sm:col-span-8 h-full flex items-center justify-center">
+            <div id="os-window" class="w-full h-44 sm:h-52 bg-slate-900/90 backdrop-blur-xl border border-cyan-400/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+              <div class="bg-slate-800/95 px-3 py-2 flex items-center justify-between border-b border-slate-700">
+                <div class="flex items-center gap-1.5">
+                  <button onclick="closeOsWindow()" class="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-400 cursor-pointer" title="Fechar janela"></button>
+                  <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                  <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  <span id="os-window-title" class="text-xs font-bold text-white ml-2">Central de Boas-Vindas NexaOS</span>
+                </div>
+                <span class="text-[10px] text-cyan-300 font-mono">NexaGlass UI</span>
+              </div>
+              <div id="os-window-body" class="p-4 text-xs sm:text-sm text-slate-200 flex-1 overflow-y-auto flex flex-col justify-center">
+                <p class="font-bold text-cyan-300 mb-1">👆 Experimente a Barra de Tarefas Abaixo!</p>
+                <p class="text-slate-300">Clique em <strong>Arquivos</strong>, <strong>Navegador</strong>, <strong>IA Nexa</strong> ou <strong>Ajustes</strong> para abrir janelas reais simuladas dentro do NexaOS.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dock Inferior Clicável -->
+        <div class="mx-auto bg-slate-950/85 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-2xl flex items-center gap-4 sm:gap-6 shadow-xl">
+          <button onclick="openOsApp('files')" class="flex flex-col items-center group cursor-pointer">
+            <span class="w-9 h-9 rounded-xl bg-amber-500/25 border border-amber-400/50 flex items-center justify-center text-lg group-hover:-translate-y-1 transition">📁</span>
+            <span class="text-[10px] text-slate-200 mt-0.5 font-medium">Arquivos</span>
+          </button>
+          <button onclick="openOsApp('browser')" class="flex flex-col items-center group cursor-pointer">
+            <span class="w-9 h-9 rounded-xl bg-cyan-500/25 border border-cyan-400/50 flex items-center justify-center text-lg group-hover:-translate-y-1 transition">🌐</span>
+            <span class="text-[10px] text-slate-200 mt-0.5 font-medium">Navegador</span>
+          </button>
+          <button onclick="openOsApp('ai')" class="flex flex-col items-center group cursor-pointer">
+            <span class="w-9 h-9 rounded-xl bg-indigo-500/25 border border-indigo-400/50 flex items-center justify-center text-lg group-hover:-translate-y-1 transition">🤖</span>
+            <span class="text-[10px] text-slate-200 mt-0.5 font-medium">IA Nexa</span>
+          </button>
+          <button onclick="openOsApp('settings')" class="flex flex-col items-center group cursor-pointer">
+            <span class="w-9 h-9 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center text-lg group-hover:-translate-y-1 transition">⚙️</span>
+            <span class="text-[10px] text-slate-200 mt-0.5 font-medium">Ajustes</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Hit Marker Element -->
-      <div id="hitMarker" class="hit-marker">
-        <div class="hit-marker-line w-full h-1 top-2.5"></div>
-        <div class="hit-marker-line h-full w-1 left-2.5"></div>
+      <div class="text-xs text-slate-400 flex justify-between items-center pt-2">
+        <span>Rascunho visual interativo • Design translúcido adaptativo</span>
+        <span class="text-cyan-400 font-semibold">Slide 4 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 5: APLICATIVOS INCLUSOS ==================== -->
+    <section data-slide="5" data-title="Aplicativos Inclusos" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Slide 05 • Aplicativos Inclusos</span>
+          <span class="text-xs text-slate-400">Programas nativos + Loja oficial</span>
+        </div>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Apps Inclusos & <span class="text-emerald-400">NexaStore</span></h2>
       </div>
 
-      <!-- Dynamic Crosshair -->
-      <div id="crosshair">
-        <div class="ch-dot"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 my-4 items-stretch">
+        <!-- Apps Pré-Instalados com Botão "Detalhes do App" -->
+        <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-3.5 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xl shrink-0">📝</div>
+              <div>
+                <h3 class="font-bold text-white text-sm">NexaOffice</h3>
+                <p class="text-[11px] text-slate-400">Textos, planilhas e slides compatíveis com Word/PDF.</p>
+              </div>
+            </div>
+            <button onclick="openDetailModal('app_office')" class="mt-2.5 self-end text-[11px] font-bold text-cyan-300 hover:underline cursor-pointer">Detalhes do App →</button>
+          </div>
+
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-3.5 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-xl shrink-0">🧭</div>
+              <div>
+                <h3 class="font-bold text-white text-sm">NexaBrowser</h3>
+                <p class="text-[11px] text-slate-400">Navegador ultrarrápido com bloqueio de rastreadores.</p>
+              </div>
+            </div>
+            <button onclick="openDetailModal('app_browser')" class="mt-2.5 self-end text-[11px] font-bold text-indigo-300 hover:underline cursor-pointer">Detalhes do App →</button>
+          </div>
+
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-3.5 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-xl shrink-0">🎨</div>
+              <div>
+                <h3 class="font-bold text-white text-sm">NexaStudio</h3>
+                <p class="text-[11px] text-slate-400">Editor de imagens, vídeos 4K e design vetorial leve.</p>
+              </div>
+            </div>
+            <button onclick="openDetailModal('app_studio')" class="mt-2.5 self-end text-[11px] font-bold text-purple-300 hover:underline cursor-pointer">Detalhes do App →</button>
+          </div>
+
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-3.5 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xl shrink-0">💻</div>
+              <div>
+                <h3 class="font-bold text-white text-sm">NexaCode</h3>
+                <p class="text-[11px] text-slate-400">IDE educativa para programar em Python, JS e C++.</p>
+              </div>
+            </div>
+            <button onclick="openDetailModal('app_code')" class="mt-2.5 self-end text-[11px] font-bold text-emerald-300 hover:underline cursor-pointer">Detalhes do App →</button>
+          </div>
+        </div>
+
+        <!-- Simulação da Loja NexaStore + Imagem -->
+        <div class="lg:col-span-5 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border border-cyan-500/35 overflow-hidden flex flex-col justify-between">
+          <div class="relative h-28 w-full overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=800&q=80"
+              alt="Simulação da loja de aplicativos NexaStore"
+              data-fallback-theme="apps"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/45 to-transparent flex items-end justify-between p-3">
+              <span class="font-display font-bold text-sm text-white">🛍️ NexaStore</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/30">100% Verificada</span>
+            </div>
+          </div>
+
+          <div class="p-3.5 space-y-2 flex-1 flex flex-col justify-center">
+            <div class="flex items-center justify-between bg-slate-950/70 p-2 rounded-xl border border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🎮</span>
+                <div>
+                  <div class="text-xs font-bold text-white">Steam & Cloud Play</div>
+                  <div class="text-[10px] text-slate-400">Jogos sem instalar</div>
+                </div>
+              </div>
+              <div class="flex gap-1.5">
+                <button onclick="openDetailModal('store_steam')" class="px-2 py-1 rounded-lg text-[11px] bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer">Info</button>
+                <button onclick="installAppDemo(this)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">Instalar</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-950/70 p-2 rounded-xl border border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🎵</span>
+                <div>
+                  <div class="text-xs font-bold text-white">Spotify & NexaMusic</div>
+                  <div class="text-[10px] text-slate-400">Áudio espacial Hi-Fi</div>
+                </div>
+              </div>
+              <div class="flex gap-1.5">
+                <button onclick="openDetailModal('store_music')" class="px-2 py-1 rounded-lg text-[11px] bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer">Info</button>
+                <button onclick="installAppDemo(this)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">Instalar</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Sem propagandas no sistema (Zero Bloatware)</span>
+        <span class="text-cyan-400 font-semibold">Slide 5 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 6: SEGURANÇA DIGITAL ==================== -->
+    <section data-slide="6" data-title="Segurança Digital" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Slide 06 • Segurança Digital</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Proteção Blindada <span class="text-emerald-400">NexaGuard</span></h2>
+          <p class="text-slate-300 text-xs sm:text-sm">
+            Clique nos escudos abaixo para entender cada camada ou execute uma varredura simulada em tempo real:
+          </p>
+          <button onclick="runSecurityScan()" id="btn-security-scan" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition cursor-pointer">
+            🛡️ Simular Escaneamento & Firewall
+          </button>
+        </div>
+
+        <!-- Imagem de Cibersegurança -->
+        <div class="lg:col-span-5">
+          <div class="relative h-36 sm:h-40 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-lg">
+            <img
+              src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80"
+              alt="Cadeado digital, escudo e firewall do NexaOS"
+              data-fallback-theme="security"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent flex items-end p-3">
+              <span id="security-status-badge" class="text-xs font-bold text-emerald-300">✅ Firewall IA Ativo • 0 Ameaças Detectadas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Camadas Clicáveis de Segurança -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+        <button onclick="openDetailModal('sec_quantum')" class="text-left glass-panel rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-emerald-500/35 p-4 transition cursor-pointer group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-2xl">🔐</span>
+            <span class="text-[11px] font-bold text-emerald-300 group-hover:translate-x-1 transition">Ver detalhes →</span>
+          </div>
+          <h3 class="font-display font-bold text-base text-white">Criptografia Quântica</h3>
+          <p class="text-xs text-slate-300 mt-1">Protege arquivos, senhas e mensagens contra interceptação externa.</p>
+        </button>
+
+        <button onclick="openDetailModal('sec_ransomware')" class="text-left glass-panel rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-cyan-500/35 p-4 transition cursor-pointer group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-2xl">🛡️</span>
+            <span class="text-[11px] font-bold text-cyan-300 group-hover:translate-x-1 transition">Ver detalhes →</span>
+          </div>
+          <h3 class="font-display font-bold text-base text-white">Escudo Anti-Ransomware</h3>
+          <p class="text-xs text-slate-300 mt-1">Isola downloads suspeitos em bolha virtual (Sandbox) e mantém backups imutáveis.</p>
+        </button>
+
+        <button onclick="openDetailModal('sec_biometric')" class="text-left glass-panel rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-indigo-500/35 p-4 transition cursor-pointer group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-2xl">🧬</span>
+            <span class="text-[11px] font-bold text-indigo-300 group-hover:translate-x-1 transition">Ver detalhes →</span>
+          </div>
+          <h3 class="font-display font-bold text-base text-white">Cofre Biométrico</h3>
+          <p class="text-xs text-slate-300 mt-1">Desbloqueio facial 3D, digital e controle total de câmera e microfone.</p>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Núcleo protegido contra alterações não autorizadas</span>
+        <span class="text-cyan-400 font-semibold">Slide 6 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 7: ACESSIBILIDADE ==================== -->
+    <section data-slide="7" data-title="Acessibilidade" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Slide 07 • Acessibilidade Universal</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mt-1">Inclusão Digital <span class="text-amber-400">Sem Barreiras</span></h2>
+        </div>
+
+        <!-- Botões Reais de Acessibilidade -->
+        <div class="flex flex-wrap items-center gap-2 bg-slate-800/90 p-2 rounded-2xl border border-slate-700">
+          <button onclick="toggleHighContrast()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 transition cursor-pointer">
+            🌓 Alto Contraste
+          </button>
+          <button onclick="toggleLargeFont()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition cursor-pointer">
+            🔍 Aumentar Fonte
+          </button>
+          <button onclick="toggleReadingGuide()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition cursor-pointer">
+            📖 Leitura Guiada
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 my-4 items-stretch">
+        <!-- Imagem de Símbolos de Acessibilidade -->
+        <div class="lg:col-span-4 relative rounded-2xl overflow-hidden border border-amber-500/35 min-h-[190px] shadow-xl flex flex-col justify-between">
+          <img
+            src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=800&q=80"
+            alt="Recursos de acessibilidade e inclusão digital"
+            data-fallback-theme="accessibility"
+            onerror="handleImageFallback(this)"
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent flex flex-col justify-end p-4">
+            <div class="text-amber-300 font-bold text-xs mb-1">♿ • 👁️ • 🗣️ • 🤟 Libras IA</div>
+            <button onclick="openDetailModal('s7_como_funciona')" class="w-full py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition cursor-pointer">
+              Como Funciona na Prática →
+            </button>
+          </div>
+        </div>
+
+        <!-- Cards de Recursos Inclusivos -->
+        <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex items-start gap-3">
+            <span class="text-2xl">🗣️</span>
+            <div>
+              <h3 class="font-display font-bold text-sm sm:text-base text-white">Leitor de Tela Neural</h3>
+              <p class="text-xs text-slate-300 mt-1">Voz natural que lê textos e descreve imagens automaticamente para pessoas com deficiência visual.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex items-start gap-3">
+            <span class="text-2xl">👁️</span>
+            <div>
+              <h3 class="font-display font-bold text-sm sm:text-base text-white">Controle Ocular e por Voz</h3>
+              <p class="text-xs text-slate-300 mt-1">Navegação completa usando apenas movimentos dos olhos pela webcam ou comandos de voz.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex items-start gap-3">
+            <span class="text-2xl">🤟</span>
+            <div>
+              <h3 class="font-display font-bold text-sm sm:text-base text-white">Legendas & Tradutor Libras</h3>
+              <p class="text-xs text-slate-300 mt-1">Gera legendas ao vivo em qualquer vídeo e oferece avatar 3D tradutor de Libras integrado.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 flex items-start gap-3">
+            <span class="text-2xl">🎨</span>
+            <div>
+              <h3 class="font-display font-bold text-sm sm:text-base text-white">Filtros para Daltonismo</h3>
+              <p class="text-xs text-slate-300 mt-1">Ajuste cromático inteligente e modo de foco reduzindo distrações visuais.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Testou os botões acima? Eles alteram esta apresentação em tempo real!</span>
+        <span class="text-cyan-400 font-semibold">Slide 7 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 8: DESEMPENHO E CONSUMO DE ENERGIA ==================== -->
+    <section data-slide="8" data-title="Desempenho e Energia" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Slide 08 • Desempenho & Energia</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Velocidade Máxima. <span class="text-emerald-400">Pouca Bateria.</span></h2>
+          <p class="text-slate-300 text-xs sm:text-sm">Alterne entre os perfis inteligentes de energia do NexaOS para ver os medidores mudarem:</p>
+          <!-- Botões Seletores de Perfil de Energia -->
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="setPowerProfile('turbo')" id="pwr-btn-turbo" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">🚀 Modo Turbo Gamer</button>
+            <button onclick="setPowerProfile('balanced')" id="pwr-btn-balanced" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition cursor-pointer">⚡ Equilibrado</button>
+            <button onclick="setPowerProfile('eco')" id="pwr-btn-eco" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">🔋 Ultra Economia</button>
+          </div>
+        </div>
+
+        <!-- Imagem de Velocidade & Hardware -->
+        <div class="lg:col-span-5">
+          <div class="relative h-36 sm:h-40 rounded-2xl overflow-hidden border border-cyan-500/35 shadow-lg">
+            <img
+              src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"
+              alt="Processador rápido, engrenagens e eficiência energética"
+              data-fallback-theme="performance"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-3">
+              <span id="pwr-tagline" class="text-xs font-semibold text-cyan-300">⚡ Perfil Equilibrado • Fluidez diária com baixo consumo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medidores Dinâmicos (CPU, RAM, FPS e Autonomia de Bateria) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 my-4">
+        <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 text-center">
+          <span class="text-2xl">⚙️</span>
+          <div id="metric-cpu" class="font-display text-2xl sm:text-3xl font-extrabold text-cyan-300 mt-1">18%</div>
+          <div class="text-xs font-semibold text-white">Uso de CPU</div>
+          <div class="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden">
+            <div id="bar-cpu" class="h-full bg-cyan-400 transition-all duration-500" style="width: 18%;"></div>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 text-center">
+          <span class="text-2xl">🧠</span>
+          <div id="metric-ram" class="font-display text-2xl sm:text-3xl font-extrabold text-indigo-300 mt-1">1.2 GB</div>
+          <div class="text-xs font-semibold text-white">Memória RAM</div>
+          <div class="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden">
+            <div id="bar-ram" class="h-full bg-indigo-400 transition-all duration-500" style="width: 24%;"></div>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 text-center">
+          <span class="text-2xl">⚡</span>
+          <div id="metric-fps" class="font-display text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1">120 FPS</div>
+          <div class="text-xs font-semibold text-white">Taxa de Quadros</div>
+          <div class="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden">
+            <div id="bar-fps" class="h-full bg-amber-400 transition-all duration-500" style="width: 70%;"></div>
+          </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl bg-slate-800/60 border border-slate-700 p-4 text-center">
+          <span class="text-2xl">🔋</span>
+          <div id="metric-bat" class="font-display text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1">16 horas</div>
+          <div class="text-xs font-semibold text-white">Autonomia Bateria</div>
+          <div class="w-full h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden">
+            <div id="bar-bat" class="h-full bg-emerald-400 transition-all duration-500" style="width: 78%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Inicialização completa em apenas 1.9 segundo</span>
+        <span class="text-cyan-400 font-semibold">Slide 8 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 9: COMPATIBILIDADE ==================== -->
+    <section data-slide="9" data-title="Compatibilidade" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Slide 09 • Compatibilidade</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Funciona com Tudo, <span class="text-indigo-400">Sem Erro</span></h2>
+          <p class="text-slate-300 text-xs sm:text-sm">Clique nas categorias abaixo para verificar a compatibilidade instantânea do NexaOS:</p>
+          <!-- Botões Verificadores de Compatibilidade -->
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="selectCompatTab('peripherals')" id="compat-btn-peripherals" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500 text-white transition cursor-pointer">🖱️ Periféricos Plug & Play</button>
+            <button onclick="selectCompatTab('apps')" id="compat-btn-apps" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">📦 Apps Windows/Linux/Android</button>
+            <button onclick="selectCompatTab('games')" id="compat-btn-games" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">🎮 Jogos & Drivers</button>
+          </div>
+        </div>
+
+        <!-- Imagem de Periféricos -->
+        <div class="lg:col-span-5">
+          <div class="relative h-36 sm:h-40 rounded-2xl overflow-hidden border border-indigo-500/35 shadow-lg">
+            <img
+              src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80"
+              alt="Mouse, teclado e periféricos compatíveis com NexaOS"
+              data-fallback-theme="peripherals"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-3">
+              <span class="text-xs font-semibold text-indigo-300">🖱️ Mouse • ⌨️ Teclado • 🖨️ Impressora • 📱 Apps</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel Dinâmico do Verificador de Compatibilidade -->
+      <div id="compat-details-box" class="glass-panel rounded-2xl bg-slate-800/65 border border-indigo-500/35 p-5 my-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+          <div class="text-sm font-bold text-white">🖱️ Mouse & Teclado</div>
+          <p class="text-xs text-slate-300 mt-1">Reconhecimento imediato via USB-C ou Bluetooth sem instalar nenhum programa extra.</p>
+          <span class="inline-block mt-2 text-[11px] font-bold text-emerald-400">✓ 100% Plug & Play</span>
+        </div>
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+          <div class="text-sm font-bold text-white">🖨️ Impressoras & Scanners</div>
+          <p class="text-xs text-slate-300 mt-1">Detecta automaticamente qualquer impressora Wi-Fi ou USB na rede local.</p>
+          <span class="inline-block mt-2 text-[11px] font-bold text-emerald-400">✓ Sem Driver Manual</span>
+        </div>
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+          <div class="text-sm font-bold text-white">🎧 Webcams & Áudio</div>
+          <p class="text-xs text-slate-300 mt-1">Microfones, fones Bluetooth e monitores externos configurados em 1 segundo.</p>
+          <span class="inline-block mt-2 text-[11px] font-bold text-emerald-400">✓ Baixa Latência</span>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Camada universal NexaBridge integrada ao sistema</span>
+        <span class="text-cyan-400 font-semibold">Slide 9 de 10</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 10: PREÇO E PÚBLICO-ALVO ==================== -->
+    <section data-slide="10" data-title="Preço e Público-Alvo" class="slide-container slide-hidden w-full min-h-[540px] rounded-3xl bg-slate-900/75 backdrop-blur-xl border border-slate-800 shadow-2xl p-6 sm:p-10 flex-col justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Slide 10 • Preço & Público-Alvo</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Escolha seu Perfil e <span class="text-emerald-400">Veja o Plano Ideal</span></h2>
+          <!-- Botões Seletores de Público-Alvo -->
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="selectAudience('students')" id="aud-btn-students" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition cursor-pointer">🎓 Estudantes</button>
+            <button onclick="selectAudience('gamers')" id="aud-btn-gamers" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">🎮 Gamers</button>
+            <button onclick="selectAudience('enterprise')" id="aud-btn-enterprise" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">🏢 Empresas</button>
+          </div>
+        </div>
+
+        <!-- Imagem Dinâmica do Público-Alvo -->
+        <div class="lg:col-span-5">
+          <div class="relative h-36 sm:h-40 rounded-2xl overflow-hidden border border-emerald-500/35 shadow-lg">
+            <img
+              id="audience-img"
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80"
+              alt="Público-alvo do NexaOS"
+              data-fallback-theme="audience"
+              onerror="handleImageFallback(this)"
+              class="w-full h-full object-cover transition duration-500"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-3">
+              <span id="audience-img-caption" class="text-xs font-bold text-emerald-300">🎓 Estudantes, Escolas & Universidades</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Dinâmico do Plano Recomendado -->
+      <div id="audience-plan-card" class="glass-panel rounded-2xl bg-gradient-to-br from-emerald-950/50 to-slate-800/80 border-2 border-emerald-500/40 p-5 my-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        <div class="md:col-span-5 border-b md:border-b-0 md:border-r border-slate-700 pb-3 md:pb-0 md:pr-4">
+          <span id="plan-tag" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500 text-slate-950">LICENÇA EDUCACIONAL</span>
+          <h3 id="plan-name" class="font-display text-2xl font-bold text-white mt-2">NexaOS Edu & Personal</h3>
+          <div id="plan-price" class="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400 mt-1">GRATUITO <span class="text-xs font-normal text-slate-300">/ para sempre</span></div>
+        </div>
+        <div class="md:col-span-7 space-y-2 text-xs sm:text-sm text-slate-200">
+          <p id="plan-desc" class="text-slate-300">Perfeito para estudantes, professores e uso doméstico diário, sem anúncios e sem custo de licença.</p>
+          <ul id="plan-benefits" class="space-y-1 text-xs text-emerald-200 font-medium">
+            <li>✅ Pacote completo NexaOffice + NexaCode + NexaStudio inclusos</li>
+            <li>✅ 100 GB de armazenamento gratuito na nuvem NexaCloud</li>
+            <li>✅ Atualizações de segurança vitalícias sem cobrar nada</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex justify-between items-center border-t border-slate-800 pt-3">
+        <span>Obrigado pela atenção! • Apresentação Oficial NexaOS</span>
+        <span class="text-cyan-400 font-bold">Slide 10 de 10</span>
+      </div>
     </section>
 
   </main>
 
-  <!-- ==================== MODAL 1: BUY MENU (LOJA DE ARMAS - 'B') ==================== -->
-  <div id="modalBuyMenu" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
-    <div class="bg-valDark border-2 border-valRed p-8 rounded-lg max-w-5xl w-full mx-4 val-cut shadow-2xl relative max-h-[90vh] overflow-y-auto">
-      <button onclick="toggleBuyMenu(false)" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">
-        <i class="fa-solid fa-xmark"></i>
+  <!-- VISÃO GERAL EM GRADE (TODOS OS 10 SLIDES) -->
+  <section id="grid-overview" class="hidden max-w-6xl w-full mx-auto p-4 sm:p-8 flex-1">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="font-display text-2xl font-bold text-white">Todos os Slides — NexaOS (10 Slides)</h2>
+        <p class="text-sm text-slate-400">Clique em qualquer cartão para ir diretamente ao slide.</p>
+      </div>
+      <button onclick="toggleGridView()" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-sm font-bold transition cursor-pointer">
+        Voltar à Apresentação
+      </button>
+    </div>
+    <div id="grid-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Gerado via JS -->
+    </div>
+  </section>
+
+  <!-- BARRA INFERIOR DE NAVEGAÇÃO -->
+  <footer id="bottom-nav" class="sticky bottom-0 z-30 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 px-4 py-3">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+      <button id="btn-prev" onclick="prevSlide()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none text-white text-sm font-semibold border border-slate-700 transition flex items-center gap-2 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span>Anterior</span>
       </button>
 
-      <div class="mb-6 flex items-center justify-between border-b border-valGrey/30 pb-4">
-        <div>
-          <h2 class="text-3xl font-black text-white uppercase tracking-wider">LOJA DE ARMAS TÁTICA <span class="text-valRed">[B]</span></h2>
-          <p class="text-xs text-gray-400 font-mono">SELECIONE SUA ARMA PARA O RANGE DE TREINAMENTO</p>
+      <!-- Bolinhas Indicadoras -->
+      <div id="slide-dots" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1"></div>
+
+      <button id="btn-next" onclick="nextSlide()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 disabled:opacity-40 disabled:pointer-events-none text-slate-950 text-sm font-bold shadow-lg shadow-cyan-500/20 transition flex items-center gap-2 cursor-pointer">
+        <span>Próximo</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <!-- MODAL INTERATIVO "ENTENDA MAIS" (DETALHES TÉCNICOS DE CADA SLIDE) -->
+  <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm items-center justify-center p-4" onclick="if(event.target===this) closeDetailModal()">
+    <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden animate-[fadeIn_0.2s_ease]">
+      <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span id="modal-detail-icon" class="text-2xl">💡</span>
+          <h3 id="modal-detail-title" class="font-display font-bold text-lg text-white">Detalhes Técnicos NexaOS</h3>
         </div>
-        <div class="bg-valDarkAlt px-4 py-2 border border-valYellow/40 val-cut">
-          <span class="text-xs text-gray-400 block font-mono">CRÉDITOS DISPONÍVEIS</span>
-          <span class="text-2xl font-black text-valYellow">9,000 ¤</span>
-        </div>
+        <button onclick="closeDetailModal()" class="w-8 h-8 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 flex items-center justify-center font-bold cursor-pointer">✕</button>
       </div>
-
-      <!-- Buy Menu Categories -->
-      <div id="buyMenuGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <!-- Injected via JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== MODAL 2: AGENT SELECT MODAL ('F2') ==================== -->
-  <div id="modalAgentSelect" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
-    <div class="bg-valDark border-2 border-valCyan p-8 rounded-lg max-w-6xl w-full mx-4 val-cut shadow-2xl relative max-h-[90vh] overflow-y-auto">
-      <button onclick="toggleAgentModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <div class="mb-6 border-b border-valGrey/30 pb-4">
-        <h2 class="text-3xl font-black text-white uppercase tracking-wider">SELEÇÃO DE AGENTE PROTOCOLO <span class="text-valCyan">[F2]</span></h2>
-        <p class="text-xs text-gray-400 font-mono">TROQUE SEU OPERADOR PARA EXPERIMENTAR HABILIDADES 3D NO RANGE</p>
-      </div>
-
-      <!-- Agent Grid in Modal -->
-      <div id="modalAgentsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
-        <!-- Injected via JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== MODAL 3: AGENT DETAILS MODAL ==================== -->
-  <div id="modalAgentDetails" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden">
-    <div class="bg-valDark border-2 border-valRed p-8 rounded-lg max-w-3xl w-full mx-4 val-cut shadow-2xl relative max-h-[90vh] overflow-y-auto">
-      <button onclick="closeAgentDetails()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <div id="agentDetailsContent">
-        <!-- Injected via JS -->
-      </div>
-    </div>
-  </div>
-
-
-  <!-- JavaScript Application Engine -->
-  <script>
-    /* ==========================================================================
-       1. DATA STRUCTURES: COMPLETE AGENTS & WEAPONS ROSTERS
-       ========================================================================== */
-
-    const AGENTS = [
-      // Duelists
-      {
-        id: 'jett',
-        name: 'Jett',
-        role: 'Duelist',
-        country: 'Coreia do Sul',
-        desc: 'Representando a Coreia do Sul, o estilo de luta veloz e evasivo de Jett permite que ela tome riscos que ninguém mais consegue.',
-        abilities: {
-          C: { name: 'Erupção das Brumas', desc: 'Lança instantaneamente um projétil que se expande em uma nuvem de fumaça.' },
-          Q: { name: 'Corrente Ascendente', desc: 'Impulsiona Jett alto no ar instantaneamente.' },
-          E: { name: 'Brisa de Impulso', desc: 'Impulsiona Jett na direção em que ela está se movendo.' },
-          X: { name: 'Tormenta de Aço', desc: 'Equipa um conjunto de facas arremessáveis altamente precisas.' }
-        }
-      },
-      {
-        id: 'phoenix',
-        name: 'Phoenix',
-        role: 'Duelist',
-        country: 'Reino Unido',
-        desc: 'Chegando com tudo do Reino Unido, o poder estelar de Phoenix se manifesta no seu estilo de luta, incendiando o campo de batalha.',
-        abilities: {
-          C: { name: 'Lodaçal', desc: 'Lança uma bola de fogo que explode após um delay ou ao atingir o chão.' },
-          Q: { name: 'Bola Curva', desc: 'Equipa um orbe de luz que faz uma curva antes de cegar todos os jogadores.' },
-          E: { name: 'Combustão', desc: 'Cria uma cortina de fogo que bloqueia a visão e cura Phoenix se ele estiver sobre ela.' },
-          X: { name: 'Renascimento', desc: 'Coloca um marcador. Se Phoenix morrer durante a duração, ele renasce no marcador.' }
-        }
-      },
-      {
-        id: 'reyna',
-        name: 'Reyna',
-        role: 'Duelist',
-        country: 'México',
-        desc: 'Forjada no coração do México, Reyna domina o combate individual, se banhando na alma dos inimigos derrotados.',
-        abilities: {
-          C: { name: 'Olhar Devorador', desc: 'Equipa um olho flutuante que cega todos os inimigos que olharem para ele.' },
-          Q: { name: 'Devorar', desc: 'Consome a alma de um inimigo abatido para regenerar vida rapidamente.' },
-          E: { name: 'Dispensar', desc: 'Consome a alma de um inimigo para se tornar intangível por um breve período.' },
-          X: { name: 'Imperatriz', desc: 'Entra em frenesi, aumentando drasticamente a velocidade de disparo e recarga.' }
-        }
-      },
-      {
-        id: 'raze',
-        name: 'Raze',
-        role: 'Duelist',
-        country: 'Brasil',
-        desc: 'Chegando do Brasil com sua personalidade explosiva, Raze adora armas grandes e estragos em área.',
-        abilities: {
-          C: { name: 'Bot Explosivo', desc: 'Lança um robô terrestre que se prende aos inimigos e explode.' },
-          Q: { name: 'Carga de Explosivos', desc: 'Lança uma carga aderente que impulsiona Raze e causa dano.' },
-          E: { name: 'Cartuchos de Tinta', desc: 'Equipa uma granada de fragmentação que se divide em sub-munições.' },
-          X: { name: 'Estraga-Prazeres', desc: 'Equipa um lança-foguetes devastador que causa dano massivo em área.' }
-        }
-      },
-      {
-        id: 'yoru',
-        name: 'Yoru',
-        role: 'Duelist',
-        country: 'Japão',
-        desc: 'Nativo do Japão, Yoru abre fendas no tecido da realidade para se infiltrar nas linhas inimigas sem ser visto.',
-        abilities: {
-          C: { name: 'Ponto Cego', desc: 'Lança um fragmento dimensional que ricocheteia e cega os inimigos.' },
-          Q: { name: 'Passagem Dimensional', desc: 'Lança um elo de teleporte que pode ser reativado para mudar de posição.' },
-          E: { name: 'Mundo Enganoso', desc: 'Cria um clone ilusório de Yoru que avança e cega ao ser destruído.' },
-          X: { name: 'Espionagem Dimensional', desc: 'Equipa uma máscara que permite entrar na dimensão de Yoru, ficando invisível.' }
-        }
-      },
-      {
-        id: 'neon',
-        name: 'Neon',
-        role: 'Duelist',
-        country: 'Filipinas',
-        desc: 'A agente filipina avança em velocidades impressionantes, descarregando surtos de bioeletricidade radiante.',
-        abilities: {
-          C: { name: 'Via Expressa', desc: 'Lança duas linhas de energia paralela que formam paredes elétricas.' },
-          Q: { name: 'Raio Involuntário', desc: 'Lança um raio de energia que ricocheteia e atordoa as zonas afetadas.' },
-          E: { name: 'Equipamento Elétrico', desc: 'Canaliza energia para ganhar velocidade de movimento e deslizar.' },
-          X: { name: 'Overdrive', desc: 'Desencadeia todo o seu poder em um raio elétrico letal e ultra preciso.' }
-        }
-      },
-      {
-        id: 'iso',
-        name: 'Iso',
-        role: 'Duelist',
-        country: 'China',
-        desc: 'Iso é um assassino de aluguel chinês que entra em estado de fluxo para reconfigurar a energia ambiente em proteção.',
-        abilities: {
-          C: { name: 'Contingência', desc: 'Dispara um muro de energia prismática indestrutível que avança.' },
-          Q: { name: 'Evolução', desc: 'Lança um projétil molecular que atravessa paredes e aplica estado Frágil.' },
-          E: { name: 'Fluxo Duplo', desc: 'Ganha um escudo protetor ao disparar no orbe gerado por abate.' },
-          X: { name: 'Contrato de Morte', desc: 'Puxa a si mesmo e ao primeiro inimigo atingido para uma arena de duelo 1v1.' }
-        }
-      },
-
-      // Initiators
-      {
-        id: 'breach',
-        name: 'Breach',
-        role: 'Initiator',
-        country: 'Suécia',
-        desc: 'Breach lança impactos sísmicos poderosos para abrir caminho através do território inimigo sem compaixão.',
-        abilities: {
-          C: { name: 'Pós-Choque', desc: 'Dispara um jato sísmico através da parede que causa dano massivo.' },
-          Q: { name: 'Estopim', desc: 'Lança uma carga cegante através de superfícies rígidas.' },
-          E: { name: 'Falha Tectônica', desc: 'Equipa um impacto sísmico que atordoa todos os alvos no caminho.' },
-          X: { name: 'Onda Sólida', desc: 'Dispara uma onda de choque devastadora em cone que arremessa e atordoa.' }
-        }
-      },
-      {
-        id: 'fade',
-        name: 'Fade',
-        role: 'Initiator',
-        country: 'Turquia',
-        desc: 'A caçadora de recompensas turca domina os pesadelos para extrair os segredos dos seus alvos.',
-        abilities: {
-          C: { name: 'Tormentador', desc: 'Lança uma criatura que segue rastros e cega/surdece os inimigos.' },
-          Q: { name: 'Captura', desc: 'Lança um orbe de tinta que se prende ao chão e encurrala os alvos.' },
-          E: { name: 'Revelar', desc: 'Dispara uma entidade assustadora que revela a posição dos alvos atingidos.' },
-          X: { name: 'Voz da Penumbra', desc: 'Dispara uma onda de energia de Pesadelo que ensurdece e deteriora vida.' }
-        }
-      },
-      {
-        id: 'gekko',
-        name: 'Gekko',
-        role: 'Initiator',
-        country: 'EUA',
-        desc: 'Nascido em Los Angeles, Gekko lidera um grupo de criaturas leais que avançam para desorientar o time inimigo.',
-        abilities: {
-          C: { name: 'Mosh Pit', desc: 'Arremessa Mosh, que se expande em uma área explosiva nociva.' },
-          Q: { name: 'Wingman', desc: 'Envia Wingman para desorientar inimigos ou armar/desarmar a Spike.' },
-          E: { name: 'Dizzy', desc: 'Lança Dizzy para voar e disparar feixes cegantes contra inimigos no campo de visão.' },
-          X: { name: 'Thrash', desc: 'Controla Thrash para avançar e explodir, detendo todos os alvos na área.' }
-        }
-      },
-      {
-        id: 'kayo',
-        name: 'KAY/O',
-        role: 'Initiator',
-        country: 'Terra Alternativa',
-        desc: 'KAY/O é uma máquina de guerra construída para neutralizar as capacidades dos Radiantes.',
-        abilities: {
-          C: { name: 'GRANADA/mem', desc: 'Arremessa uma granada que gruda no chão e explode múltiplas vezes.' },
-          Q: { name: 'GARRANCHO/fita', desc: 'Arremessa uma granada de clarão que cega rapidamente.' },
-          E: { name: 'PONTO/zero', desc: 'Lança uma faca que se prende à superfície e suprime habilidades inimigas.' },
-          X: { name: 'ANULAR/cmd', desc: 'Emite pulsos maciços de energia que suprimem inimigos e permitem autorressuscitação.' }
-        }
-      },
-      {
-        id: 'skye',
-        name: 'Skye',
-        role: 'Initiator',
-        country: 'Austrália',
-        desc: 'Oriunda da Austrália, Skye e seu bando de feras criadas em madeira abrem caminho em território hostil.',
-        abilities: {
-          C: { name: 'Regeneração', desc: 'Equipa um amuleto de cura que restaura os aliados dentro do alcance.' },
-          Q: { name: 'Predador Sombrio', desc: 'Controla um tigre da tasmânia que avança para salto e atordoamento.' },
-          E: { name: 'Luz Desbravadora', desc: 'Equipa um falcão guiável que se transforma em cegueira luminosa.' },
-          X: { name: 'Rastradores', desc: 'Lança três rastreadores que buscam os três inimigos mais próximos.' }
-        }
-      },
-      {
-        id: 'sova',
-        name: 'Sova',
-        role: 'Initiator',
-        country: 'Rússia',
-        desc: 'Nascido no inverno rigoroso da Rússia, Sova rastreia, localiza e elimina inimigos com precisão impecável.',
-        abilities: {
-          C: { name: 'Drone Coruja', desc: 'Equipa e controla um drone voador que dispara dardos reveladores.' },
-          Q: { name: 'Flecha de Choque', desc: 'Dispara uma flecha que detona ao impacto emitindo danos elétricos.' },
-          E: { name: 'Flecha Rastejante', desc: 'Dispara uma flecha de reconhecimento que revela a localização dos alvos.' },
-          X: { name: 'Fúria do Caçador', desc: 'Dispara três disparos de energia que atravessam o mapa inteiro.' }
-        }
-      },
-
-      // Controllers
-      {
-        id: 'astra',
-        name: 'Astra',
-        role: 'Controller',
-        country: 'Gana',
-        desc: 'Astra utiliza energias do cosmos para remodelar os campos de batalha de acordo com seu desejo.',
-        abilities: {
-          C: { name: 'Poço Gravitacional', desc: 'Ativa uma estrela para puxar todos os jogadores na área e fragilizá-los.' },
-          Q: { name: 'Pulso Nova', desc: 'Ativa uma estrela para explodir e atordoar todos na zona.' },
-          E: { name: 'Névoa Sombria', desc: 'Ativa uma estrela para transformá-la em uma cortina de fumaça.' },
-          X: { name: 'Divisão Cósmica', desc: 'Cria uma parede cósmica gigante que bloqueia disparos e abafa áudios.' }
-        }
-      },
-      {
-        id: 'brimstone',
-        name: 'Brimstone',
-        role: 'Controller',
-        country: 'EUA',
-        desc: 'Garantindo vantagem tática, o arsenal orbital de Brimstone garante que sua equipe sempre tenha superioridade.',
-        abilities: {
-          C: { name: 'Sinalizador Estimulante', desc: 'Lança um dispositivo que concede Fogo Rápido aos aliados.' },
-          Q: { name: 'Incendiário', desc: 'Lança uma granada incendiária que cria um piso em chamas.' },
-          E: { name: 'Fumaça Orbital', desc: 'Utiliza o mapa tático para lançar cortinas de fumaça duradouras.' },
-          X: { name: 'Ataque Orbital', desc: 'Dispara um raio laser orbital devastador em um local selecionado.' }
-        }
-      },
-      {
-        id: 'clove',
-        name: 'Clove',
-        role: 'Controller',
-        country: 'Escócia',
-        desc: 'Nativa da Escócia, Clove desafia a própria morte com travessuras que mantêm os inimigos em dúvida constante.',
-        abilities: {
-          C: { name: 'Absorção de Vitalidade', desc: 'Absorve a força de um inimigo abatido para ganhar aceleração e vida temporária.' },
-          Q: { name: 'Poder de Interferência', desc: 'Lança um fragmento de essência que reduz temporariamente a vida do alvo.' },
-          E: { name: 'Ruse (Névoa)', desc: 'Lança nuvens de fumaça que podem ser posicionadas mesmo após a morte.' },
-          X: { name: 'Ainda Não Morri', desc: 'Ressuscita após ser abatido se conseguir uma eliminação em breve.' }
-        }
-      },
-      {
-        id: 'harbor',
-        name: 'Harbor',
-        role: 'Controller',
-        country: 'Índia',
-        desc: 'Com tecnologia ancestral de controle hídrico, Harbor ergue muralhas de água e ondas protetoras.',
-        abilities: {
-          C: { name: 'Cascata', desc: 'Lança uma onda de água que avança e atravessa paredes, desacelerando alvos.' },
-          Q: { name: 'Enseada', desc: 'Lança uma esfera de água protetora que bloqueia projéteis e balas.' },
-          E: { name: 'Mar Mágico', desc: 'Guia uma cortina de água ao longo do chão para criar bloqueios flexíveis.' },
-          X: { name: 'Inundação', desc: 'Invoca um gêiser gigante que atinge posições inimigas repetidamente.' }
-        }
-      },
-      {
-        id: 'omen',
-        name: 'Omen',
-        role: 'Controller',
-        country: 'Desconhecido',
-        desc: 'Omen caça nas sombras. Ele cega inimigos, teleporta pelo campo e semeia paranoia constante.',
-        abilities: {
-          C: { name: 'Passos das Sombras', desc: 'Canaliza um teleporte de curta distância para posições selecionadas.' },
-          Q: { name: 'Paranoia', desc: 'Dispara um projétil sombrio em linha reta que cega e ensurdece todos atingidos.' },
-          E: { name: 'Manto Sombrio', desc: 'Lança uma esfera sombria que se expande na localização desejada.' },
-          X: { name: 'Das Sombras', desc: 'Teleporta-se para qualquer ponto do mapa inteiro como uma sombra.' }
-        }
-      },
-      {
-        id: 'viper',
-        name: 'Viper',
-        role: 'Controller',
-        country: 'EUA',
-        desc: 'A química norte-americana Viper emprega um arsenal de dispositivos tóxicos para controlar o combate.',
-        abilities: {
-          C: { name: 'Veneno de Cobra', desc: 'Lança um cartucho que se rompe em um poço ácido de dano e vulnerabilidade.' },
-          Q: { name: 'Nuvem Venenosa', desc: 'Lança um emissor de gás que pode ser ativado para criar fumaça tóxica.' },
-          E: { name: 'Cortina TÓXICA', desc: 'Lança uma linha de emissores que cria uma alta parede de gás veneno.' },
-          X: { name: 'Poço Peçonhento', desc: 'Borrifa uma nuvem química gigante que reduz a vida dos inimigos dentro dela.' }
-        }
-      },
-
-      // Sentinels
-      {
-        id: 'chamber',
-        name: 'Chamber',
-        role: 'Sentinel',
-        country: 'França',
-        desc: 'Bem vestido e armado até os dentes, o designer de armas francês Chamber mantém a linha com precisão cirúrgica.',
-        abilities: {
-          C: { name: 'Marca Registrada', desc: 'Posiciona uma armadilha que desacelera os inimigos detectados.' },
-          Q: { name: 'Caçador de Cabeças', desc: 'Equipa uma pistola pesada de alta precisão com mira telescópica.' },
-          E: { name: 'Rendezvous', desc: 'Posiciona uma âncora de teleporte para escapar instantaneamente de perigos.' },
-          X: { name: 'Tour de Force', desc: 'Invoca um fuzil de precisão personalizado letal que mata com um tiro no peito.' }
-        }
-      },
-      {
-        id: 'cypher',
-        name: 'Cypher',
-        role: 'Sentinel',
-        country: 'Marrocos',
-        desc: 'O especialista em rede de inteligência marroquino Cypher é uma rede de vigilância ambulante.',
-        abilities: {
-          C: { name: 'Fio-Armadilha', desc: 'Posiciona um fio invisível entre paredes que revela e imobiliza inimigos.' },
-          Q: { name: 'Gaiola Cibernética', desc: 'Lança uma armadilha que cria uma zona de bloqueio visual e efeito sonoro.' },
-          E: { name: 'Câmera de Vigilância', desc: 'Posiciona uma câmera remota que dispara dardos rastreadores.' },
-          X: { name: 'Assalto Neural', desc: 'Extrai informações do corpo de um inimigo abatido revelando a posição de todos.' }
-        }
-      },
-      {
-        id: 'deadlock',
-        name: 'Deadlock',
-        role: 'Sentinel',
-        country: 'Noruega',
-        desc: 'A agente norueguesa Deadlock emprega nanofios de alta tecnologia para parar os avanços mais agressivos.',
-        abilities: {
-          C: { name: 'Sensor Gravitacional', desc: 'Lança um sensor que se ativa com ruídos fortes de passos e disparos.' },
-          Q: { name: 'Barreira de Redes', desc: 'Lança um disco que cria um bloqueio de movimento de 4 vias.' },
-          E: { name: 'Muralha de Fios', desc: 'Ergue uma rede de nanofios que imobiliza qualquer um que passar.' },
-          X: { name: 'Aniquilação', desc: 'Dispara um casulo de nanofios que captura o primeiro inimigo e o puxa para a morte.' }
-        }
-      },
-      {
-        id: 'killjoy',
-        name: 'Killjoy',
-        role: 'Sentinel',
-        country: 'Alemanha',
-        desc: 'A inventora alemã Killjoy domina o campo de batalha com seu arsenal de invenções tecnológicas.',
-        abilities: {
-          C: { name: 'Nanoswarm', desc: 'Lança uma granada discreta que libera um enxame de nanobôs de alto dano.' },
-          Q: { name: 'Robô de Alarme', desc: 'Posiciona um robô furtivo que persegue e aplica vulnerabilidade ao alvo.' },
-          E: { name: 'Torreta', desc: 'Posiciona uma torreta que dispara automaticamente em inimigos num cone de 180°.' },
-          X: { name: 'Confinamento', desc: 'Ativa um dispositivo que detém e desarma todos os inimigos no alcance após countdown.' }
-        }
-      },
-      {
-        id: 'sage',
-        name: 'Sage',
-        role: 'Sentinel',
-        country: 'China',
-        desc: 'Como uma fortaleza chinesa, Sage garante segurança para si e sua equipe onde quer que vá com cura e cura total.',
-        abilities: {
-          C: { name: 'Orbe de Barreira', desc: 'Ergue uma sólida parede de gelo de alta resistência.' },
-          Q: { name: 'Orbe de Lentidão', desc: 'Lança um orbe que se despedaça em um campo de desaceleração ruidoso.' },
-          E: { name: 'Orbe de Cura', desc: 'Cura um aliado ou a si mesma ao longo do tempo.' },
-          X: { name: 'Ressurreição', desc: 'Ressuscita um aliado morto com vida cheia.' }
-        }
-      }
-    ];
-
-    const WEAPONS = [
-      // Sidearms
-      { id: 'classic', name: 'Classic', category: 'Sidearms', price: 0, ammo: 12, reserve: 36, fireRate: '6.75 t/s', mode: 'Semiautomático / Rajada 3 tiros', head: 78, body: 26, leg: 22 },
-      { id: 'shorty', name: 'Shorty', category: 'Sidearms', price: 300, ammo: 2, reserve: 10, fireRate: '3.3 t/s', mode: 'Semiautomático', head: 36, body: 12, leg: 10 },
-      { id: 'frenzy', name: 'Frenzy', category: 'Sidearms', price: 450, ammo: 13, reserve: 39, fireRate: '10 t/s', mode: 'Automático', head: 55, body: 26, leg: 22 },
-      { id: 'ghost', name: 'Ghost', category: 'Sidearms', price: 500, ammo: 15, reserve: 45, fireRate: '6.75 t/s', mode: 'Semiautomático (Silenciada)', head: 105, body: 30, leg: 25 },
-      { id: 'sheriff', name: 'Sheriff', category: 'Sidearms', price: 800, ammo: 6, reserve: 24, fireRate: '4 t/s', mode: 'Semiautomático', head: 159, body: 55, leg: 46 },
-
-      // SMGs
-      { id: 'stinger', name: 'Stinger', category: 'SMGs', price: 1100, ammo: 20, reserve: 60, fireRate: '18 t/s', mode: 'Automático / Rajada Zoom', head: 67, body: 27, leg: 22 },
-      { id: 'spectre', name: 'Spectre', category: 'SMGs', price: 1600, ammo: 30, reserve: 90, fireRate: '13.3 t/s', mode: 'Automático (Silenciada)', head: 78, body: 26, leg: 22 },
-
-      // Shotguns
-      { id: 'bucky', name: 'Bucky', category: 'Shotguns', price: 850, ammo: 5, reserve: 15, fireRate: '1.1 t/s', mode: 'Semiautomático (Tiro Secundário Airburst)', head: 44, body: 22, leg: 18 },
-      { id: 'judge', name: 'Judge', category: 'Shotguns', price: 1850, ammo: 7, reserve: 21, fireRate: '3.5 t/s', mode: 'Automático', head: 34, body: 17, leg: 14 },
-
-      // Rifles
-      { id: 'bulldog', name: 'Bulldog', category: 'Rifles', price: 2050, ammo: 24, reserve: 72, fireRate: '10 t/s', mode: 'Automático / Rajada Zoom 3 tiros', head: 115, body: 35, leg: 29 },
-      { id: 'guardian', name: 'Guardian', category: 'Rifles', price: 2250, ammo: 12, reserve: 36, fireRate: '5.25 t/s', mode: 'Semiautomático (Alta Penetração)', head: 195, body: 65, leg: 48 },
-      { id: 'phantom', name: 'Phantom', category: 'Rifles', price: 2900, ammo: 30, reserve: 90, fireRate: '11 t/s', mode: 'Automático (Silenciada)', head: 156, body: 39, leg: 33 },
-      { id: 'vandal', name: 'Vandal', category: 'Rifles', price: 2900, ammo: 25, reserve: 75, fireRate: '9.75 t/s', mode: 'Automático (Dano constante)', head: 160, body: 40, leg: 34 },
-
-      // Snipers
-      { id: 'marshal', name: 'Marshal', category: 'Snipers', price: 950, ammo: 5, reserve: 15, fireRate: '1.5 t/s', mode: 'Ferrolho / Zoom 3.5x', head: 202, body: 101, leg: 85 },
-      { id: 'outlaw', name: 'Outlaw', category: 'Snipers', price: 2400, ammo: 2, reserve: 10, fireRate: '2.75 t/s', mode: 'Cano Duplo / Zoom 4x', head: 238, body: 140, leg: 119 },
-      { id: 'operator', name: 'Operator', category: 'Snipers', price: 4700, ammo: 5, reserve: 10, fireRate: '0.6 t/s', mode: 'Sniper Pesado / Zoom 2.5x & 5x', head: 255, body: 150, leg: 120 },
-
-      // Machine Guns
-      { id: 'ares', name: 'Ares', category: 'Heavy', price: 1600, ammo: 50, reserve: 150, fireRate: '13 t/s', mode: 'Automático (Aceleração de disparo)', head: 72, body: 30, leg: 25 },
-      { id: 'odin', name: 'Odin', category: 'Heavy', price: 3200, ammo: 100, reserve: 200, fireRate: '15 t/s', mode: 'Automático (Supressão Massiva)', head: 95, body: 38, leg: 32 },
-
-      // Melee
-      { id: 'tacticalknife', name: 'Faca Tática', category: 'Melee', price: 0, ammo: '∞', reserve: '∞', fireRate: 'Slasher', mode: 'Ataque Leve / Pesado pelas Costas', head: 75, body: 50, leg: 50 }
-    ];
-
-    /* App State Variables */
-    let currentTab = 'manual';
-    let currentSelectedAgent = AGENTS[0]; // Jett
-    let currentSelectedWeapon = WEAPONS.find(w => w.id === 'vandal');
-    let currentAmmo = currentSelectedWeapon.ammo;
-    let reserveAmmo = currentSelectedWeapon.reserve;
-    let isReloading = false;
-    let isScoped = false;
-
-    /* Stats Trackers */
-    let stats = { kills: 0, headshots: 0, shotsFired: 0, shotsHit: 0 };
-
-    /* ==========================================================================
-       2. UI TAB NAVIGATION & UI RENDERERS
-       ========================================================================== */
-
-    function switchTab(tab) {
-      currentTab = tab;
-      
-      document.getElementById('sectionManual').classList.add('hidden');
-      document.getElementById('sectionAgents').classList.add('hidden');
-      document.getElementById('sectionWeapons').classList.add('hidden');
-      document.getElementById('sectionRange').classList.add('hidden');
-
-      // Reset button styles
-      ['Manual', 'Agents', 'Weapons', 'Range'].forEach(t => {
-        const btn = document.getElementById(`tab${t}Btn`);
-        if (btn) {
-          btn.className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valDarkAlt border border-valGrey/30 text-gray-300 hover:text-white val-cut";
-        }
-      });
-
-      if (tab === 'manual') {
-        document.getElementById('sectionManual').classList.remove('hidden');
-        document.getElementById('tabManualBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut";
-      } else if (tab === 'agents') {
-        document.getElementById('sectionAgents').classList.remove('hidden');
-        document.getElementById('tabAgentsBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut";
-        renderAgents('ALL');
-      } else if (tab === 'weapons') {
-        document.getElementById('sectionWeapons').classList.remove('hidden');
-        document.getElementById('tabWeaponsBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valRed text-white val-cut";
-        renderWeapons('ALL');
-      } else if (tab === 'range') {
-        document.getElementById('sectionRange').classList.remove('hidden');
-        document.getElementById('tabRangeBtn').className = "px-5 py-2 text-sm font-bold tracking-wider uppercase transition-all bg-valCyan text-valDark font-extrabold val-cut shadow-lg shadow-valCyan/30";
-        init3DRange();
-      }
-    }
-
-    // Render Agents Gallery
-    function renderAgents(roleFilter) {
-      const container = document.getElementById('agentsGrid');
-      container.innerHTML = '';
-
-      const filtered = roleFilter === 'ALL' ? AGENTS : AGENTS.filter(a => a.role === roleFilter);
-
-      filtered.forEach(agent => {
-        const card = document.createElement('div');
-        card.className = "bg-valDarkAlt border border-valGrey/20 p-5 val-cut relative group hover:border-valRed transition-all cursor-pointer flex flex-col justify-between";
-        card.onclick = () => openAgentDetails(agent);
-
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-mono px-2 py-0.5 bg-valDark text-valCyan border border-valCyan/30 rounded">${agent.role}</span>
-              <span class="text-xs text-gray-500 font-mono">${agent.country}</span>
-            </div>
-            <h3 class="text-2xl font-black text-white uppercase group-hover:text-valRed transition-colors mb-2">${agent.name}</h3>
-            <p class="text-xs text-gray-400 line-clamp-3 mb-4 leading-relaxed">${agent.desc}</p>
-          </div>
-          <div class="pt-3 border-t border-valGrey/20 flex items-center justify-between">
-            <span class="text-[10px] text-gray-500 font-mono">HABILIDADES: C Q E X</span>
-            <span class="text-xs text-valRed font-bold group-hover:translate-x-1 transition-transform">VER AGENTE <i class="fa-solid fa-arrow-right ml-1"></i></span>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function filterAgents(role) {
-      renderAgents(role);
-    }
-
-    // Open Agent Full Details Modal
-    function openAgentDetails(agent) {
-      const modal = document.getElementById('modalAgentDetails');
-      const content = document.getElementById('agentDetailsContent');
-
-      content.innerHTML = `
-        <div class="flex items-center justify-between border-b border-valGrey/30 pb-4 mb-6">
-          <div>
-            <span class="text-xs text-valCyan font-mono uppercase tracking-widest">${agent.role} // ${agent.country}</span>
-            <h2 class="text-4xl font-black text-white uppercase">${agent.name}</h2>
-          </div>
-          <button onclick="selectAgentFromModal('${agent.id}')" class="val-btn-red px-6 py-2 text-sm font-bold uppercase">
-            SELECIONAR PARA O RANGE
+      <div class="p-6 space-y-4">
+        <p id="modal-detail-desc" class="text-sm text-slate-200 leading-relaxed"></p>
+        <div id="modal-detail-highlights" class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs text-cyan-200"></div>
+        <div class="flex justify-end">
+          <button onclick="closeDetailModal()" class="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm transition cursor-pointer">
+            Entendi! Voltar ao Slide
           </button>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <p class="text-sm text-gray-300 leading-relaxed mb-6">${agent.desc}</p>
+  <!-- NOTIFICAÇÃO FLUTUANTE (TOAST) -->
+  <div id="toast-box" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2.5 rounded-2xl bg-slate-800 border border-cyan-500/50 text-white text-xs sm:text-sm font-medium shadow-2xl"></div>
 
-        <h4 class="text-sm font-bold text-valRed uppercase tracking-wider mb-4 font-mono">KIT DE HABILIDADES TÁTICAS</h4>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-valDark p-4 border-l-2 border-valCyan val-cut">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-black text-white uppercase text-sm">${agent.abilities.C.name}</span>
-              <span class="text-xs text-valCyan font-mono font-bold">[C]</span>
-            </div>
-            <p class="text-xs text-gray-400">${agent.abilities.C.desc}</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-l-2 border-valCyan val-cut">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-black text-white uppercase text-sm">${agent.abilities.Q.name}</span>
-              <span class="text-xs text-valCyan font-mono font-bold">[Q]</span>
-            </div>
-            <p class="text-xs text-gray-400">${agent.abilities.Q.desc}</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-l-2 border-valRed val-cut">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-black text-white uppercase text-sm">${agent.abilities.E.name}</span>
-              <span class="text-xs text-valRed font-mono font-bold">[E - ASSINATURA]</span>
-            </div>
-            <p class="text-xs text-gray-400">${agent.abilities.E.desc}</p>
-          </div>
-
-          <div class="bg-valDark p-4 border-l-2 border-valYellow val-cut">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-black text-white uppercase text-sm">${agent.abilities.X.name}</span>
-              <span class="text-xs text-valYellow font-mono font-bold">[X - ULTIMATE]</span>
-            </div>
-            <p class="text-xs text-gray-400">${agent.abilities.X.desc}</p>
-          </div>
-        </div>
-      `;
-
-      modal.classList.remove('hidden');
+  <!-- JAVASCRIPT COMPLETO DA APRESENTAÇÃO INTERATIVA -->
+  <script>
+    // Fallback automático em SVG caso alguma imagem externa falhe
+    function handleImageFallback(imgElement) {
+      imgElement.onerror = null;
+      const theme = imgElement.getAttribute('data-fallback-theme') || 'default';
+      const themes = {
+        logo: { c1: '#0e7490', c2: '#312e81', label: 'NEXA OS • NEXACORE' },
+        devices: { c1: '#0f172a', c2: '#0284c7', label: 'PC • SMARTPHONE • CONSOLE • TABLET' },
+        innovation: { c1: '#1e1b4b', c2: '#0891b2', label: 'NEXAMIND IA OFFLINE' },
+        interface: { c1: '#0f172a', c2: '#4338ca', label: 'NEXAGLASS UI' },
+        apps: { c1: '#064e3b', c2: '#0284c7', label: 'NEXASTORE & APPS' },
+        security: { c1: '#022c22', c2: '#059669', label: 'NEXAGUARD SEGURANÇA' },
+        accessibility: { c1: '#451a03', c2: '#d97706', label: 'ACESSIBILIDADE UNIVERSAL' },
+        performance: { c1: '#083344', c2: '#10b981', label: 'DESEMPENHO & BATERIA' },
+        peripherals: { c1: '#1e1b4b', c2: '#4f46e5', label: 'PLUG & PLAY UNIVERSAL' },
+        audience: { c1: '#064e3b', c2: '#1d4ed8', label: 'ESTUDANTES • GAMERS • EMPRESAS' },
+        default: { c1: '#0f172a', c2: '#0891b2', label: 'NEXA OS' }
+      };
+      const t = themes[theme] || themes.default;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="${t.c1}"/>
+            <stop offset="100%" stop-color="${t.c2}"/>
+          </linearGradient>
+        </defs>
+        <rect width="800" height="450" fill="url(#g)"/>
+        <polygon points="400,60 540,140 540,310 400,390 260,310 260,140" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="4"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="24" letter-spacing="2">${t.label}</text>
+      </svg>`;
+      imgElement.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
     }
 
-    function closeAgentDetails() {
-      document.getElementById('modalAgentDetails').classList.add('hidden');
-    }
+    // ==================== NAVEGAÇÃO ENTRE OS 10 SLIDES ====================
+    let currentSlide = 1;
+    const totalSlides = 10;
+    let isGridView = false;
 
-    function selectAgentFromModal(agentId) {
-      const found = AGENTS.find(a => a.id === agentId);
-      if (found) {
-        currentSelectedAgent = found;
-        updateHUD();
-        closeAgentDetails();
-        toggleAgentModal(false);
+    document.addEventListener('DOMContentLoaded', () => {
+      buildSlideDots();
+      buildGridOverview();
+      updateSlideUI();
+      startLiveClock();
+    });
+
+    function buildSlideDots() {
+      const container = document.getElementById('slide-dots');
+      container.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.setAttribute('aria-label', `Ir para slide ${i}`);
+        dot.className = `h-2.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentSlide ? 'w-7 bg-cyan-400' : 'w-2.5 bg-slate-600 hover:bg-slate-400'}`;
+        dot.onclick = () => goToSlide(i);
+        container.appendChild(dot);
       }
     }
 
-    // Render Weapons Gallery
-    function renderWeapons(categoryFilter) {
-      const container = document.getElementById('weaponsGrid');
+    function updateSlideUI() {
+      document.querySelectorAll('[data-slide]').forEach(slide => {
+        const num = parseInt(slide.getAttribute('data-slide'), 10);
+        if (num === currentSlide) {
+          slide.classList.remove('slide-hidden');
+          slide.classList.add('slide-active');
+        } else {
+          slide.classList.remove('slide-active');
+          slide.classList.add('slide-hidden');
+        }
+      });
+
+      document.getElementById('top-slide-badge').textContent = `Slide ${currentSlide} de ${totalSlides}`;
+      document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+      document.getElementById('btn-prev').disabled = currentSlide === 1;
+      document.getElementById('btn-next').disabled = currentSlide === totalSlides;
+      buildSlideDots();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlideUI();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlideUI();
+      }
+    }
+
+    function goToSlide(num) {
+      currentSlide = num;
+      if (isGridView) toggleGridView();
+      updateSlideUI();
+    }
+
+    // Teclado (Setas e Esc)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeDetailModal();
+        return;
+      }
+      if (document.getElementById('detail-modal').classList.contains('flex')) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+    });
+
+    // Suporte a deslize (Touch Swipe)
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (isGridView || document.getElementById('detail-modal').classList.contains('flex')) return;
+      const diff = touchStartX - e.changedTouches[0].screenX;
+      if (Math.abs(diff) > 55) {
+        if (diff > 0) nextSlide();
+        else prevSlide();
+      }
+    }, { passive: true });
+
+    // Grade Geral ("Todos os Slides")
+    function buildGridOverview() {
+      const container = document.getElementById('grid-cards-container');
       container.innerHTML = '';
-
-      const filtered = categoryFilter === 'ALL' ? WEAPONS : WEAPONS.filter(w => w.category === categoryFilter);
-
-      filtered.forEach(weapon => {
-        const card = document.createElement('div');
-        card.className = "bg-valDarkAlt border border-valGrey/20 p-5 val-cut relative group hover:border-valCyan transition-all flex flex-col justify-between";
-
+      document.querySelectorAll('[data-slide]').forEach(slide => {
+        const num = parseInt(slide.getAttribute('data-slide'), 10);
+        const title = slide.getAttribute('data-title');
+        const card = document.createElement('button');
+        card.className = 'text-left rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-cyan-400 p-5 transition flex flex-col justify-between gap-3 group cursor-pointer';
+        card.onclick = () => goToSlide(num);
         card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-mono px-2 py-0.5 bg-valDark text-valYellow border border-valYellow/30 rounded">${weapon.category}</span>
-              <span class="text-sm font-black text-valYellow font-mono">${weapon.price > 0 ? weapon.price + ' ¤' : 'GRÁTIS'}</span>
-            </div>
-            <h3 class="text-2xl font-black text-white uppercase group-hover:text-valCyan transition-colors mb-1">${weapon.name}</h3>
-            <p class="text-xs text-gray-400 font-mono mb-4">Modo: ${weapon.mode}</p>
+          <div class="flex items-center justify-between w-full">
+            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500/20 text-cyan-300">Slide ${String(num).padStart(2, '0')}</span>
+            <span class="text-xs text-slate-400 group-hover:text-cyan-400 transition">Abrir →</span>
           </div>
-
-          <div class="space-y-2 border-t border-valGrey/20 pt-3 text-xs font-mono">
-            <div class="flex justify-between text-gray-300">
-              <span>Munição Pente/Reserva:</span>
-              <span class="text-white font-bold">${weapon.ammo} / ${weapon.reserve}</span>
-            </div>
-            <div class="flex justify-between text-gray-300">
-              <span>Taxa de Disparo:</span>
-              <span class="text-white font-bold">${weapon.fireRate}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1 pt-2 border-t border-valGrey/10 text-center">
-              <div class="bg-valDark p-1.5 val-cut">
-                <span class="text-[10px] text-gray-500 block">CABEÇA</span>
-                <span class="text-valCyan font-bold">${weapon.head}</span>
-              </div>
-              <div class="bg-valDark p-1.5 val-cut">
-                <span class="text-[10px] text-gray-500 block">CORPO</span>
-                <span class="text-white font-bold">${weapon.body}</span>
-              </div>
-              <div class="bg-valDark p-1.5 val-cut">
-                <span class="text-[10px] text-gray-500 block">PERNAS</span>
-                <span class="text-gray-400 font-bold">${weapon.leg}</span>
-              </div>
-            </div>
-          </div>
+          <div class="font-display font-bold text-lg text-white">${title}</div>
         `;
         container.appendChild(card);
       });
     }
 
-    function filterWeapons(cat) {
-      renderWeapons(cat);
+    function toggleGridView() {
+      isGridView = !isGridView;
+      document.getElementById('presentation-stage').classList.toggle('hidden', isGridView);
+      document.getElementById('bottom-nav').classList.toggle('hidden', isGridView);
+      document.getElementById('grid-overview').classList.toggle('hidden', !isGridView);
+      document.getElementById('grid-btn-text').textContent = isGridView ? 'Modo Slide' : 'Todos os Slides';
     }
 
-    // Modal Buy Menu Populator
-    function renderBuyMenu() {
-      const container = document.getElementById('buyMenuGrid');
-      container.innerHTML = '';
-
-      WEAPONS.forEach(weapon => {
-        const isEquipped = currentSelectedWeapon.id === weapon.id;
-        const item = document.createElement('div');
-        item.className = `bg-valDarkAlt border ${isEquipped ? 'border-valRed bg-valRed/10' : 'border-valGrey/30 hover:border-white'} p-4 val-cut cursor-pointer transition-all flex flex-col justify-between`;
-        item.onclick = () => selectWeaponFromBuyMenu(weapon);
-
-        item.innerHTML = `
-          <div>
-            <div class="text-[10px] font-mono text-valYellow uppercase mb-1">${weapon.category}</div>
-            <h4 class="text-lg font-black text-white uppercase">${weapon.name}</h4>
-            <div class="text-xs font-mono text-valGrey mt-1">${weapon.price > 0 ? weapon.price + ' ¤' : 'GRÁTIS'}</div>
-          </div>
-          <div class="mt-4 pt-2 border-t border-valGrey/20 flex items-center justify-between">
-            <span class="text-[10px] text-gray-400 font-mono">${weapon.ammo} RDs</span>
-            <span class="text-xs font-bold ${isEquipped ? 'text-valRed' : 'text-valCyan'}">${isEquipped ? 'EQUIPADA' : 'COMPRAR'}</span>
-          </div>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function toggleBuyMenu(show) {
-      const modal = document.getElementById('modalBuyMenu');
-      if (show) {
-        renderBuyMenu();
-        modal.classList.remove('hidden');
-        if (document.pointerLockElement) document.exitPointerLock();
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => showToast('Tela cheia solicitada.'));
       } else {
-        modal.classList.add('hidden');
+        document.exitFullscreen();
       }
     }
 
-    function selectWeaponFromBuyMenu(weapon) {
-      currentSelectedWeapon = weapon;
-      currentAmmo = weapon.ammo;
-      reserveAmmo = typeof weapon.reserve === 'number' ? weapon.reserve : 999;
-      updateHUD();
-      toggleBuyMenu(false);
-      create3DWeaponModel();
-    }
-
-    // Agent Selection Modal Populator
-    function renderAgentModalList() {
-      const container = document.getElementById('modalAgentsGrid');
-      container.innerHTML = '';
-
-      AGENTS.forEach(agent => {
-        const isSelected = currentSelectedAgent.id === agent.id;
-        const item = document.createElement('div');
-        item.className = `bg-valDarkAlt border ${isSelected ? 'border-valCyan bg-valCyan/10' : 'border-valGrey/30 hover:border-white'} p-3 val-cut cursor-pointer transition-all text-center`;
-        item.onclick = () => {
-          currentSelectedAgent = agent;
-          updateHUD();
-          toggleAgentModal(false);
-        };
-
-        item.innerHTML = `
-          <div class="text-[10px] font-mono text-valCyan uppercase mb-1">${agent.role}</div>
-          <h4 class="text-base font-black text-white uppercase">${agent.name}</h4>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function toggleAgentModal(show) {
-      const modal = document.getElementById('modalAgentSelect');
-      if (show) {
-        renderAgentModalList();
-        modal.classList.remove('hidden');
-        if (document.pointerLockElement) document.exitPointerLock();
-      } else {
-        modal.classList.add('hidden');
+    // ==================== BANCO DE CONTEÚDO DOS MODAIS "ENTENDA MAIS" ====================
+    const detailTopics = {
+      s1_origem: {
+        icon: '🔷',
+        title: 'Origem do Nome "NexaOS" & Identidade',
+        desc: 'O nome NexaOS vem de "Nexus" (conexão central). Ele simboliza um sistema que une hardware, inteligência artificial e nuvem em um único ponto fluido, representado pelo logotipo hexagonal de 6 vértices.',
+        points: [
+          '• Slogan: "Inteligência fluida em cada tela"',
+          '• Paleta Ciano + Índigo + Esmeralda: transmite tecnologia limpa e baixo cansaço visual',
+          '• Design modular preparado para telas pequenas ou monitores ultrawide'
+        ]
+      },
+      s1_kernel: {
+        icon: '⚙️',
+        title: 'Arquitetura Microkernel NexaCore v2.0',
+        desc: 'Diferente de sistemas antigos monolíticos, o NexaCore mantém apenas o gerenciamento essencial de memória e CPU no núcleo. Drivers e aplicativos rodam isolados, impedindo telas azuis ou travamentos.',
+        points: [
+          '• Escrito em Rust e C++ moderno para máxima segurança de memória',
+          '• Recuperação automática de drivers em menos de 50 milissegundos',
+          '• Suporte nativo a processadores x86-64 e ARM'
+        ]
+      },
+      s2_adaptacao: {
+        icon: '📱',
+        title: 'Como Funciona o NexaFlex UI?',
+        desc: 'O NexaFlex detecta o tamanho da tela e os sensores do aparelho em tempo real. Se você conectar um smartphone NexaOS a um monitor, ele alterna instantaneamente para o modo Desktop com janelas.',
+        points: [
+          '• PC/Notebook: Múltiplas janelas flutuantes e barra inferior completa',
+          '• Smartphone/Tablet: Gestos fluidos com uma mão e divisão de tela por toque',
+          '• Videogame: Interface 100% navegável por controle/joystick em 4K 120Hz'
+        ]
+      },
+      s3_ia: {
+        icon: '🧠',
+        title: 'NexaMind: Inteligência Artificial Offline',
+        desc: 'A IA do NexaOS roda localmente no chip neural (NPU) do dispositivo. Isso significa respostas instantâneas, funcionamento sem internet e privacidade total, pois seus dados nunca saem do aparelho.',
+        points: [
+          '• Busca semântica: encontre arquivos descrevendo o conteúdo ("trabalho de história sobre o Brasil")',
+          '• Resumo automático de PDFs, páginas web e gravações de aula',
+          '• Automação inteligente de brilho, som e organização de janelas'
+        ]
+      },
+      s3_nuvem: {
+        icon: '☁️',
+        title: 'Nuvem Híbrida Instantânea (NexaLink)',
+        desc: 'Com o NexaLink, seus documentos ficam disponíveis em todos os dispositivos sem precisar enviar e-mails para si mesmo ou usar cabos USB.',
+        points: [
+          '• Área de transferência universal: copie no celular e cole no PC',
+          '• Arquivos sob demanda: economiza até 80% do armazenamento interno',
+          '• Sincronização criptografada ponto a ponto'
+        ]
+      },
+      s3_velocidade: {
+        icon: '⚡',
+        title: 'Zero Lentidão ao Longo dos Anos',
+        desc: 'Sistemas tradicionais acumulam lixo digital e processos ocultos que deixam o computador lento com o tempo. No NexaOS, cada app é instalado em um contêiner limpo que não deixa rastros ao ser removido.',
+        points: [
+          '• Sem registro centralizado que corrompe ou fica pesado',
+          '• Atualizações em partição dupla: instala em segundo plano sem reiniciar',
+          '• Desempenho constante mesmo em notebooks básicos'
+        ]
+      },
+      s4_interface: {
+        icon: '✨',
+        title: 'Recursos da Interface NexaGlass UI',
+        desc: 'A interface foi projetada para reduzir distrações e acelerar o acesso às tarefas diárias com transparências suaves, cantos arredondados e agrupamento inteligente de janelas.',
+        points: [
+          '• Snap Inteligente: organize até 4 janelas na tela com um clique',
+          '• Widgets dinâmicos na lateral com resumo do dia e status do sistema',
+          '• Tema escuro nativo calibrado para economia de energia em telas OLED'
+        ]
+      },
+      app_office: {
+        icon: '📝',
+        title: 'NexaOffice — Suíte de Produtividade',
+        desc: 'Inclui editor de documentos, planilhas inteligentes e criador de slides com suporte total aos formatos .docx, .xlsx, .pptx e .pdf, já vindo instalado gratuitamente.',
+        points: ['• Correção gramatical e geração de gráficos assistida pela IA Nexa', '• Colaboração em tempo real via link']
+      },
+      app_browser: {
+        icon: '🧭',
+        title: 'NexaBrowser — Navegação Privada e Leve',
+        desc: 'Construído para consumir 40% menos memória RAM que navegadores comuns, bloqueando rastreadores de anúncios e scripts maliciosos por padrão.',
+        points: ['• Modo Leitura limpa artigos com um clique', '• Suspensão automática de abas inativas']
+      },
+      app_studio: {
+        icon: '🎨',
+        title: 'NexaStudio — Criação Visual e Vídeo',
+        desc: 'Ferramenta nativa para editar fotos, recortar fundos com IA e montar vídeos escolares ou profissionais em 4K usando aceleração de hardware.',
+        points: ['• Exportação rápida para redes sociais e apresentações', '• Biblioteca gratuita de ícones e fontes']
+      },
+      app_code: {
+        icon: '💻',
+        title: 'NexaCode — Ambiente de Programação',
+        desc: 'Ideal para estudantes de tecnologia e desenvolvedores: já vem com terminal integrado, destaque de sintaxe e suporte pronto para Python, JavaScript, HTML/CSS e C++.',
+        points: ['• Execução de código com 1 clique sem configurações complexas', '• Assistente de explicação de erros integrado']
+      },
+      store_steam: {
+        icon: '🎮',
+        title: 'Steam & Cloud Play na NexaStore',
+        desc: 'Permite rodar jogos instalados localmente com modo Game Boost ou jogar títulos pesados via streaming na nuvem mesmo em notebooks simples.',
+        points: ['• Suporte nativo a controles Xbox, PlayStation e genéricos']
+      },
+      store_music: {
+        icon: '🎵',
+        title: 'Spotify & NexaMusic Hi-Fi',
+        desc: 'Integração direta com a barra superior do sistema para controlar músicas, podcasts e equalizador espacial 3D sem abrir janelas.',
+        points: ['• Modo foco com sons ambientes integrado']
+      },
+      sec_quantum: {
+        icon: '🔐',
+        title: 'Criptografia Quântica Pós-Modernidade',
+        desc: 'Todos os arquivos salvos no disco e trafegados na rede utilizam algoritmos resistentes a ataques avançados, garantindo que apenas você tenha a chave de leitura.',
+        points: ['• Proteção automática de Wi-Fi público com VPN nativa', '• Cofre de senhas integrado ao navegador']
+      },
+      sec_ransomware: {
+        icon: '🛡️',
+        title: 'Escudo Anti-Ransomware & Sandbox',
+        desc: 'Qualquer arquivo baixado da internet é executado dentro de uma caixa isolada (Sandbox). Se tentar sequestrar ou criptografar suas pastas, o NexaGuard bloqueia e restaura tudo na hora.',
+        points: ['• Partição do sistema somente-leitura (imutável)', '• Pontos de restauração instantâneos a cada hora']
+      },
+      sec_biometric: {
+        icon: '🧬',
+        title: 'Cofre Biométrico & Privacidade de Hardware',
+        desc: 'Desbloqueie o computador com reconhecimento facial 3D, impressão digital ou aproximação do seu smartphone NexaOS. Um indicador luminoso avisa sempre que câmera ou microfone são ativados.',
+        points: ['• Bloqueio de câmera e microfone por software com 1 clique', '• Zero coleta de dados pessoais para publicidade']
+      },
+      s7_como_funciona: {
+        icon: '♿',
+        title: 'Como a Acessibilidade Funciona no NexaOS?',
+        desc: 'Todos os recursos inclusivos fazem parte do núcleo do sistema, funcionando em qualquer aplicativo ou site sem exigir instalações extras ou custos adicionais.',
+        points: [
+          '• Pressione 3x a tecla Espaço na tela inicial para ativar o assistente de voz',
+          '• Avatar de Libras traduz textos selecionados em tempo real',
+          '• Calibração de cores para protanopia, deuteranopia e tritanopia'
+        ]
       }
-    }
-
-    function updateHUD() {
-      document.getElementById('hudAgentName').innerText = currentSelectedAgent.name;
-      document.getElementById('hudAgentRole').innerText = currentSelectedAgent.role;
-      document.getElementById('hudWeaponName').innerText = currentSelectedWeapon.name;
-      document.getElementById('hudCurrentAmmo').innerText = currentAmmo;
-      document.getElementById('hudReserveAmmo').innerText = reserveAmmo;
-
-      document.getElementById('statKills').innerText = stats.kills;
-      document.getElementById('statHeadshots').innerText = stats.headshots;
-
-      const acc = stats.shotsFired > 0 ? Math.round((stats.shotsHit / stats.shotsFired) * 100) : 100;
-      document.getElementById('statAccuracy').innerText = acc + '%';
-    }
-
-
-    /* ==========================================================================
-       3. WEB AUDIO API - PROCEDURAL SOUND SYNTHESIS
-       ========================================================================== */
-
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioCtx = null;
-
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new AudioContext();
-      }
-    }
-
-    function playGunshotSound() {
-      if (!audioCtx) return;
-      
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-
-      // Sharp transient burst
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(300, now);
-      osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
-
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.12);
-    }
-
-    function playHeadshotDing() {
-      if (!audioCtx) return;
-
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1200, now);
-      osc.frequency.exponentialRampToValueAtTime(1800, now + 0.15);
-
-      gain.gain.setValueAtTime(0.4, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.2);
-    }
-
-
-    /* ==========================================================================
-       4. THREE.JS 3D RANGE SIMULATOR & FPS CONTROLLER
-       ========================================================================== */
-
-    let scene, camera, renderer;
-    let weaponMesh, weaponGroup;
-    let targets = [];
-    let is3DInitialized = false;
-
-    // Controls state
-    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-    let velocity = new THREE.Vector3();
-    let direction = new THREE.Vector3();
-    let yaw = 0, pitch = 0;
-
-    function init3DRange() {
-      if (is3DInitialized) return;
-      is3DInitialized = true;
-
-      const container = document.getElementById('sectionRange');
-      const canvas = document.getElementById('rangeCanvas');
-
-      // 1. Scene setup
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0f1923);
-      scene.fog = new THREE.FogExp2(0x0f1923, 0.015);
-
-      // 2. Camera setup
-      camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-      camera.position.set(0, 1.7, 0); // Eye level
-
-      // 3. Renderer setup
-      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-
-      // 4. Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-
-      const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
-      dirLight.position.set(20, 40, 20);
-      dirLight.castShadow = true;
-      scene.add(dirLight);
-
-      // 5. Environment (Sandstone Floor & Target Range)
-      createRangeEnvironment();
-
-      // 6. Spawn Targets & Bot Dummies
-      spawnRangeBots();
-
-      // 7. Weapon Model attached to camera
-      weaponGroup = new THREE.Group();
-      camera.add(weaponGroup);
-      scene.add(camera);
-      create3DWeaponModel();
-
-      // Event Listeners
-      setupControls(canvas);
-
-      // Animation Loop
-      let lastTime = performance.now();
-      function animate() {
-        requestAnimationFrame(animate);
-
-        const time = performance.now();
-        const delta = (time - lastTime) / 1000;
-        lastTime = time;
-
-        if (document.pointerLockElement === canvas) {
-          updateMovement(delta);
-        }
-
-        renderer.render(scene, camera);
-      }
-      animate();
-
-      window.addEventListener('resize', () => {
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-      });
-    }
-
-    // Build 3D Sandstone Range Architecture
-    function createRangeEnvironment() {
-      // Floor Grid
-      const floorGeo = new THREE.PlaneGeometry(100, 150);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x222930, roughness: 0.8 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.z = -50;
-      floor.receiveShadow = true;
-      scene.add(floor);
-
-      // Side Walls
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x1f2326, roughness: 0.6 });
-      const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(2, 20, 150), wallMat);
-      wallLeft.position.set(-25, 10, -50);
-      scene.add(wallLeft);
-
-      const wallRight = wallLeft.clone();
-      wallRight.position.x = 25;
-      scene.add(wallRight);
-
-      // Range Distance Markers (10m, 20m, 30m, 50m)
-      [10, 20, 30, 50].forEach(dist => {
-        const lineGeo = new THREE.BoxGeometry(48, 0.1, 0.5);
-        const lineMat = new THREE.MeshBasicMaterial({ color: 0x00F0FF });
-        const line = new THREE.Mesh(lineGeo, lineMat);
-        line.position.set(0, 0.05, -dist);
-        scene.add(line);
-      });
-
-      // Floating Radianite Crates
-      for (let i = 0; i < 6; i++) {
-        const crateGeo = new THREE.BoxGeometry(2, 2, 2);
-        const crateMat = new THREE.MeshStandardMaterial({ color: 0xFF4655, emissive: 0x330000, roughness: 0.3 });
-        const crate = new THREE.Mesh(crateGeo, crateMat);
-        crate.position.set((Math.random() - 0.5) * 30, 1 + Math.random() * 2, -15 - Math.random() * 35);
-        scene.add(crate);
-      }
-    }
-
-    // Spawn Bot Target Dummies with Head/Body Hitboxes
-    function spawnRangeBots() {
-      targets.forEach(t => scene.remove(t.group));
-      targets = [];
-
-      const positions = [
-        { x: -5, z: -10 }, { x: 0, z: -10 }, { x: 5, z: -10 },
-        { x: -8, z: -20 }, { x: 0, z: -20 }, { x: 8, z: -20 },
-        { x: -12, z: -30 }, { x: 0, z: -30 }, { x: 12, z: -30 }
-      ];
-
-      positions.forEach(pos => {
-        const group = new THREE.Group();
-        group.position.set(pos.x, 0, pos.z);
-
-        // Body Mesh
-        const bodyGeo = new THREE.CylinderGeometry(0.5, 0.4, 1.6, 12);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
-        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-        bodyMesh.position.y = 0.8;
-        bodyMesh.userData = { type: 'body', parentGroup: group };
-        group.add(bodyMesh);
-
-        // Head Mesh (Headshot Target)
-        const headGeo = new THREE.SphereGeometry(0.3, 16, 16);
-        const headMat = new THREE.MeshStandardMaterial({ color: 0x00F0FF, emissive: 0x004455, roughness: 0.2 });
-        const headMesh = new THREE.Mesh(headGeo, headMat);
-        headMesh.position.y = 1.8;
-        headMesh.userData = { type: 'head', parentGroup: group };
-        group.add(headMesh);
-
-        scene.add(group);
-        targets.push({ group, headMesh, bodyMesh, alive: true });
-      });
-    }
-
-    // Create 3D FPS Gun Model
-    function create3DWeaponModel() {
-      while (weaponGroup.children.length > 0) {
-        weaponGroup.remove(weaponGroup.children[0]);
-      }
-
-      // Simple Stylized Valorant Rifle Geometry
-      const bodyGeo = new THREE.BoxGeometry(0.12, 0.16, 0.7);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1f2326, metalness: 0.8, roughness: 0.2 });
-      weaponMesh = new THREE.Mesh(bodyGeo, bodyMat);
-      weaponMesh.position.set(0.3, -0.25, -0.6);
-
-      // Barrel
-      const barrelGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8);
-      const barrelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-      const barrel = new THREE.Mesh(barrelGeo, barrelMat);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.02, -0.5);
-      weaponMesh.add(barrel);
-
-      weaponGroup.add(weaponMesh);
-    }
-
-    // FPS Controls & Event Bindings
-    function setupControls(canvas) {
-      canvas.addEventListener('click', () => {
-        initAudio();
-        canvas.requestPointerLock();
-        document.getElementById('lockPrompt').classList.add('hidden');
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (document.pointerLockElement !== canvas) return;
-
-        const sensitivity = 0.002;
-        yaw -= e.movementX * sensitivity;
-        pitch -= e.movementY * sensitivity;
-
-        // Clamp pitch to prevent camera flip
-        pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
-
-        camera.rotation.order = 'YXZ';
-        camera.rotation.y = yaw;
-        camera.rotation.x = pitch;
-      });
-
-      // Key Bindings
-      window.addEventListener('keydown', (e) => {
-        if (document.pointerLockElement !== canvas) {
-          if (e.key.toLowerCase() === 'b') toggleBuyMenu(true);
-          if (e.key === 'F2') toggleAgentModal(true);
-          return;
-        }
-
-        switch (e.code) {
-          case 'KeyW': moveForward = true; break;
-          case 'KeyS': moveBackward = true; break;
-          case 'KeyA': moveLeft = true; break;
-          case 'KeyD': moveRight = true; break;
-          case 'KeyR': reloadWeapon(); break;
-          case 'KeyB': toggleBuyMenu(true); break;
-          case 'F2': toggleAgentModal(true); break;
-          case 'KeyC': triggerAbilityEffect('C'); break;
-          case 'KeyQ': triggerAbilityEffect('Q'); break;
-          case 'KeyE': triggerAbilityEffect('E'); break;
-          case 'KeyX': triggerAbilityEffect('X'); break;
-        }
-      });
-
-      window.addEventListener('keyup', (e) => {
-        switch (e.code) {
-          case 'KeyW': moveForward = false; break;
-          case 'KeyS': moveBackward = false; break;
-          case 'KeyA': moveLeft = false; break;
-          case 'KeyD': moveRight = false; break;
-        }
-      });
-
-      // Mouse Firing
-      window.addEventListener('mousedown', (e) => {
-        if (document.pointerLockElement !== canvas) return;
-        if (e.button === 0) fireWeapon(); // Left click
-        if (e.button === 2) toggleScope(); // Right click
-      });
-    }
-
-    // Movement Loop
-    function updateMovement(delta) {
-      velocity.x -= velocity.x * 10.0 * delta;
-      velocity.z -= velocity.z * 10.0 * delta;
-
-      direction.z = Number(moveForward) - Number(moveBackward);
-      direction.x = Number(moveRight) - Number(moveLeft);
-      direction.normalize();
-
-      if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
-      if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
-
-      camera.translateX(-velocity.x * delta);
-      camera.translateZ(velocity.z * delta);
-      camera.position.y = 1.7; // Fixed height
-    }
-
-    // Fire Weapon Mechanics & Raycasting
-    function fireWeapon() {
-      if (isReloading) return;
-      if (currentAmmo <= 0) {
-        reloadWeapon();
-        return;
-      }
-
-      currentAmmo--;
-      stats.shotsFired++;
-      updateHUD();
-      playGunshotSound();
-
-      // Recoil Weapon Kickback Animation
-      if (weaponMesh) {
-        weaponMesh.position.z += 0.08;
-        setTimeout(() => weaponMesh.position.z -= 0.08, 60);
-      }
-
-      // Raycast Shooting
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-
-      const targetMeshes = [];
-      targets.forEach(t => {
-        if (t.alive) {
-          targetMeshes.push(t.headMesh, t.bodyMesh);
-        }
-      });
-
-      const intersects = raycaster.intersectObjects(targetMeshes);
-
-      if (intersects.length > 0) {
-        stats.shotsHit++;
-        const hitObj = intersects[0].object;
-        const type = hitObj.userData.type;
-
-        triggerHitMarker();
-
-        if (type === 'head') {
-          stats.headshots++;
-          stats.kills++;
-          playHeadshotDing();
-          showDamageNumber('+160 HEADSHOT', '#00F0FF');
-          respawnBot(hitObj.userData.parentGroup);
-        } else {
-          stats.kills++;
-          showDamageNumber('+40 BODY', '#FFFFFF');
-          respawnBot(hitObj.userData.parentGroup);
-        }
-
-        updateHUD();
-      }
-    }
-
-    // Respawn Bot Target
-    function respawnBot(botGroup) {
-      botGroup.position.x = (Math.random() - 0.5) * 30;
-      botGroup.position.z = -10 - Math.random() * 35;
-    }
-
-    // Trigger Visual Hit Marker
-    function triggerHitMarker() {
-      const hm = document.getElementById('hitMarker');
-      hm.style.opacity = '1';
-      setTimeout(() => hm.style.opacity = '0', 120);
-    }
-
-    // Floating 3D Damage Numbers
-    function showDamageNumber(text, color) {
-      const el = document.createElement('div');
-      el.className = "fixed text-2xl font-black font-mono pointer-events-none transition-all z-40";
-      el.style.color = color;
-      el.style.top = "45%";
-      el.style.left = "52%";
-      el.innerText = text;
-      document.body.appendChild(el);
-
-      setTimeout(() => {
-        el.style.top = "40%";
-        el.style.opacity = "0";
-      }, 50);
-
-      setTimeout(() => el.remove(), 600);
-    }
-
-    // Reload Mechanic
-    function reloadWeapon() {
-      if (isReloading || currentAmmo === currentSelectedWeapon.ammo) return;
-      isReloading = true;
-
-      document.getElementById('reloadIndicator').classList.remove('hidden');
-
-      setTimeout(() => {
-        currentAmmo = currentSelectedWeapon.ammo;
-        isReloading = false;
-        document.getElementById('reloadIndicator').classList.add('hidden');
-        updateHUD();
-      }, 1500);
-    }
-
-    // Toggle Sniper Scope Overlay
-    function toggleScope() {
-      if (['marshal', 'outlaw', 'operator'].includes(currentSelectedWeapon.id)) {
-        isScoped = !isScoped;
-        const scope = document.getElementById('scopeOverlay');
-        scope.style.display = isScoped ? 'block' : 'none';
-        camera.fov = isScoped ? 25 : 75;
-        camera.updateProjectionMatrix();
-      }
-    }
-
-    // Trigger Visual 3D Ability Effects
-    function triggerAbilityEffect(key) {
-      const ability = currentSelectedAgent.abilities[key];
-      if (!ability) return;
-
-      // Create glowing 3D sphere/wall in front of player
-      const sphereGeo = new THREE.SphereGeometry(2, 16, 16);
-      const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00F0FF, wireframe: true, transparent: true, opacity: 0.8 });
-      const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-
-      const dir = new THREE.Vector3();
-      camera.getWorldDirection(dir);
-      sphere.position.copy(camera.position).add(dir.multiplyScalar(5));
-
-      scene.add(sphere);
-
-      // Animate expansion
-      let scale = 1;
-      const interval = setInterval(() => {
-        scale += 0.2;
-        sphere.scale.set(scale, scale, scale);
-        if (scale > 3) {
-          clearInterval(interval);
-          scene.remove(sphere);
-        }
-      }, 50);
-
-      showDamageNumber(`[${key}] ${ability.name.toUpperCase()}`, '#FF4655');
-    }
-
-    /* Initialize Default View */
-    window.onload = function() {
-      renderAgents('ALL');
-      renderWeapons('ALL');
     };
+
+    function openDetailModal(key) {
+      const item = detailTopics[key];
+      if (!item) return;
+      document.getElementById('modal-detail-icon').textContent = item.icon;
+      document.getElementById('modal-detail-title').textContent = item.title;
+      document.getElementById('modal-detail-desc').textContent = item.desc;
+      document.getElementById('modal-detail-highlights').innerHTML = item.points.map(p => `<p>${p}</p>`).join('');
+      const modal = document.getElementById('detail-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById('detail-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // ==================== SLIDE 2: SELETOR DE DISPOSITIVOS ====================
+    function selectDeviceMode(mode) {
+      const modes = {
+        pc: {
+          icon: '💻',
+          title: 'Modo Desktop & Notebook',
+          badge: 'Multitarefa Completa',
+          desc: 'Interface com múltiplas janelas flutuantes, barra de tarefas inteligente, suporte a até 4 monitores 8K e atalhos profissionais de teclado.',
+          ram: '1.1 GB',
+          input: 'Mouse, Teclado & Touch'
+        },
+        phone: {
+          icon: '📱',
+          title: 'Modo Smartphone',
+          badge: 'Gestos com 1 Mão',
+          desc: 'Layout vertical dinâmico com botões alcançáveis pelo polegar, widgets interativos na tela de bloqueio e economia extrema de bateria em 5G.',
+          ram: '750 MB',
+          input: 'Toque & Comandos de Voz'
+        },
+        console: {
+          icon: '🎮',
+          title: 'Modo Videogame / Console',
+          badge: 'Máximo FPS & GPU',
+          desc: 'Pausa todos os processos em segundo plano, dedica 98% da placa de vídeo aos jogos e oferece menu panorâmico navegável pelo controle.',
+          ram: '680 MB',
+          input: 'Joystick Xbox / PS / PC'
+        },
+        tablet: {
+          icon: '📟',
+          title: 'Modo Tablet & Estúdio',
+          badge: 'Caneta Stylus Zero-Delay',
+          desc: 'Tela dividida inteligente para assistir aulas enquanto faz anotações à mão, com reconhecimento instantâneo de escrita e desenhos.',
+          ram: '890 MB',
+          input: 'Caneta Digital & Multi-Toque'
+        }
+      };
+
+      const data = modes[mode];
+      if (!data) return;
+
+      document.getElementById('dev-icon').textContent = data.icon;
+      document.getElementById('dev-title').textContent = data.title;
+      document.getElementById('dev-badge').textContent = data.badge;
+      document.getElementById('dev-desc').textContent = data.desc;
+      document.getElementById('dev-ram').textContent = data.ram;
+      document.getElementById('dev-input').textContent = data.input;
+
+      ['pc', 'phone', 'console', 'tablet'].forEach(k => {
+        const btn = document.getElementById(`dev-btn-${k}`);
+        if (k === mode) {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition cursor-pointer';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer';
+        }
+      });
+    }
+
+    // ==================== SLIDE 4: MOCKUP INTERATIVO DO NEXAOS ====================
+    function startLiveClock() {
+      const clockEl = document.getElementById('os-live-clock');
+      const update = () => {
+        const now = new Date();
+        clockEl.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      };
+      update();
+      setInterval(update, 15000);
+    }
+
+    function openOsApp(appKey) {
+      const win = document.getElementById('os-window');
+      const title = document.getElementById('os-window-title');
+      const body = document.getElementById('os-window-body');
+      const topLabel = document.getElementById('os-active-app-label');
+
+      win.classList.remove('hidden');
+
+      const apps = {
+        files: {
+          name: 'NexaFiles — Meus Projetos',
+          html: `<div class="space-y-2">
+                  <div class="flex items-center justify-between text-xs font-bold text-amber-300">
+                    <span>📁 Nuvem Híbrida NexaLink</span>
+                    <span class="text-emerald-400">Sincronizado</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800">📄 Trabalho_SO.ndoc</div>
+                    <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800">📊 Apresentacao.nslide</div>
+                  </div>
+                </div>`
+        },
+        browser: {
+          name: 'NexaBrowser — Navegação Rápida',
+          html: `<div class="space-y-2">
+                  <div class="bg-slate-950 px-3 py-1 rounded-lg text-[11px] text-cyan-300 border border-slate-800">🔒 https://nexaos.tech/arquitetura</div>
+                  <p class="text-xs text-slate-300">Bloqueador nativo ativo: <strong>18 rastreadores bloqueados</strong> nesta página. Economia de 40% de memória RAM.</p>
+                </div>`
+        },
+        ai: {
+          name: 'Assistente IA NexaMind (Offline)',
+          html: `<div class="space-y-2 bg-indigo-950/40 p-3 rounded-xl border border-indigo-500/30">
+                  <div class="text-xs font-bold text-cyan-300">🤖 NexaMind pronta para ajudar:</div>
+                  <p class="text-xs text-slate-200">“Posso resumir seus PDFs de estudo, organizar suas janelas ou ativar o modo economia de bateria agora mesmo.”</p>
+                </div>`
+        },
+        settings: {
+          name: 'Ajustes do Sistema NexaOS',
+          html: `<div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between"><span>Versão do Núcleo:</span><span class="text-cyan-300 font-bold">NexaCore v2.0 (Rust)</span></div>
+                  <div class="flex justify-between"><span>Segurança NexaGuard:</span><span class="text-emerald-400 font-bold">Criptografia Quântica Ativa</span></div>
+                  <div class="flex justify-between"><span>Tempo de Boot:</span><span class="text-amber-300 font-bold">1.9 segundo</span></div>
+                </div>`
+        }
+      };
+
+      const selected = apps[appKey];
+      if (selected) {
+        title.textContent = selected.name;
+        topLabel.textContent = selected.name;
+        body.innerHTML = selected.html;
+      }
+    }
+
+    function closeOsWindow() {
+      document.getElementById('os-window').classList.add('hidden');
+      document.getElementById('os-active-app-label').textContent = 'Área de Trabalho';
+    }
+
+    // ==================== SLIDE 5: INSTALAÇÃO NA NEXASTORE ====================
+    function installAppDemo(btn) {
+      if (btn.dataset.installed === 'true') return;
+      btn.textContent = 'Baixando...';
+      btn.classList.replace('bg-cyan-500', 'bg-amber-400');
+      setTimeout(() => {
+        btn.textContent = '✓ Instalado';
+        btn.dataset.installed = 'true';
+        btn.classList.replace('bg-amber-400', 'bg-emerald-500');
+        showToast('Aplicativo instalado em contêiner isolado na NexaStore!');
+      }, 600);
+    }
+
+    // ==================== SLIDE 6: SIMULAÇÃO DE ESCANEAMENTO DE SEGURANÇA ====================
+    function runSecurityScan() {
+      const btn = document.getElementById('btn-security-scan');
+      const badge = document.getElementById('security-status-badge');
+      btn.disabled = true;
+      btn.textContent = '⏳ Verificando núcleo e firewall...';
+      badge.textContent = '🔍 Escaneando memória, rede e arquivos...';
+      badge.className = 'text-xs font-bold text-amber-300';
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '🛡️ Simular Escaneamento & Firewall';
+        badge.textContent = '✅ 100% Seguro • Firewall IA & Criptografia Ativos';
+        badge.className = 'text-xs font-bold text-emerald-300';
+        showToast('Varredura concluída: 0 vírus e 0 invasões detectadas!');
+      }, 1100);
+    }
+
+    // ==================== SLIDE 7: ACESSIBILIDADE AO VIVO ====================
+    function toggleHighContrast() {
+      document.body.classList.toggle('high-contrast');
+      showToast(document.body.classList.contains('high-contrast') ? 'Modo Alto Contraste ativado!' : 'Modo Alto Contraste desativado.');
+    }
+
+    function toggleLargeFont() {
+      document.body.classList.toggle('large-font');
+      showToast(document.body.classList.contains('large-font') ? 'Fonte ampliada ativada!' : 'Tamanho de fonte padrão.');
+    }
+
+    function toggleReadingGuide() {
+      document.body.classList.toggle('reading-guide');
+      showToast(document.body.classList.contains('reading-guide') ? 'Modo Leitura Guiada ativado!' : 'Modo Leitura Guiada desativado.');
+    }
+
+    // ==================== SLIDE 8: PERFIS DE DESEMPENHO E BATERIA ====================
+    function setPowerProfile(profile) {
+      const profiles = {
+        turbo: {
+          cpu: '42%', barCpu: '42%',
+          ram: '2.1 GB', barRam: '45%',
+          fps: '240 FPS', barFps: '100%',
+          bat: '8 horas', barBat: '40%',
+          tag: '🚀 Modo Turbo Gamer • Máxima potência gráfica e latência zero'
+        },
+        balanced: {
+          cpu: '18%', barCpu: '18%',
+          ram: '1.2 GB', barRam: '24%',
+          fps: '120 FPS', barFps: '70%',
+          bat: '16 horas', barBat: '78%',
+          tag: '⚡ Perfil Equilibrado • Fluidez diária com baixo consumo'
+        },
+        eco: {
+          cpu: '6%', barCpu: '8%',
+          ram: '0.8 GB', barRam: '16%',
+          fps: '60 FPS', barFps: '45%',
+          bat: '24 horas', barBat: '100%',
+          tag: '🔋 Ultra Economia • Hiberna apps inativos para durar o dia inteiro'
+        }
+      };
+
+      const p = profiles[profile];
+      if (!p) return;
+
+      document.getElementById('metric-cpu').textContent = p.cpu;
+      document.getElementById('bar-cpu').style.width = p.barCpu;
+      document.getElementById('metric-ram').textContent = p.ram;
+      document.getElementById('bar-ram').style.width = p.barRam;
+      document.getElementById('metric-fps').textContent = p.fps;
+      document.getElementById('bar-fps').style.width = p.barFps;
+      document.getElementById('metric-bat').textContent = p.bat;
+      document.getElementById('bar-bat').style.width = p.barBat;
+      document.getElementById('pwr-tagline').textContent = p.tag;
+
+      ['turbo', 'balanced', 'eco'].forEach(k => {
+        const btn = document.getElementById(`pwr-btn-${k}`);
+        if (k === profile) {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition cursor-pointer';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer';
+        }
+      });
+    }
+
+    // ==================== SLIDE 9: VERIFICADOR DE COMPATIBILIDADE ====================
+    function selectCompatTab(tab) {
+      const box = document.getElementById('compat-details-box');
+      const content = {
+        peripherals: `
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🖱️ Mouse & Teclado</div>
+            <p class="text-xs text-slate-300 mt-1">Reconhecimento imediato via USB-C ou Bluetooth sem instalar nenhum programa extra.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-emerald-400">✓ 100% Plug & Play</span>
+          </div>
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🖨️ Impressoras & Scanners</div>
+            <p class="text-xs text-slate-300 mt-1">Detecta automaticamente qualquer impressora Wi-Fi ou USB na rede local.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-emerald-400">✓ Sem Driver Manual</span>
+          </div>
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🎧 Webcams & Áudio</div>
+            <p class="text-xs text-slate-300 mt-1">Microfones, fones Bluetooth e monitores externos configurados em 1 segundo.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-emerald-400">✓ Baixa Latência</span>
+          </div>
+        `,
+        apps: `
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🪟 Programas Windows (.exe)</div>
+            <p class="text-xs text-slate-300 mt-1">Camada de tradução nativa NexaBridge roda softwares clássicos sem emuladores lentos.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-cyan-300">✓ Execução Direta</span>
+          </div>
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🤖 Apps Android (.apk)</div>
+            <p class="text-xs text-slate-300 mt-1">Abra aplicativos móveis em janelas redimensionáveis diretamente na área de trabalho.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-cyan-300">✓ Suporte Nativo</span>
+          </div>
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🐧 Pacotes Linux & Web</div>
+            <p class="text-xs text-slate-300 mt-1">Compatível com Flatpak, AppImage e aplicativos web progressivos (PWA).</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-cyan-300">✓ Ecossistema Aberto</span>
+          </div>
+        `,
+        games: `
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🎮 Controles & Volantes</div>
+            <p class="text-xs text-slate-300 mt-1">Mapeamento automático para controles Xbox, DualSense, Nintendo e volantes USB.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-amber-300">✓ Vibração & Gatilhos</span>
+          </div>
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🖥️ Drivers Gráficos Vulkan</div>
+            <p class="text-xs text-slate-300 mt-1">Drivers NVIDIA, AMD e Intel já vêm pré-otimizados no núcleo do NexaOS.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-amber-300">✓ Ray Tracing Pronto</span>
+          </div>
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-sm font-bold text-white">🕹️ Lojas & Anti-Cheat</div>
+            <p class="text-xs text-slate-300 mt-1">Compatível com Steam, Epic Games e jogos competitivos online sem bloqueios.</p>
+            <span class="inline-block mt-2 text-[11px] font-bold text-amber-300">✓ Alta Performance</span>
+          </div>
+        `
+      };
+
+      box.innerHTML = content[tab];
+      ['peripherals', 'apps', 'games'].forEach(k => {
+        const btn = document.getElementById(`compat-btn-${k}`);
+        if (k === tab) {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500 text-white transition cursor-pointer';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer';
+        }
+      });
+    }
+
+    // ==================== SLIDE 10: SELETOR DE PÚBLICO-ALVO E PREÇO ====================
+    function selectAudience(aud) {
+      const audiences = {
+        students: {
+          img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80',
+          caption: '🎓 Estudantes, Escolas & Universidades',
+          tag: 'LICENÇA EDUCACIONAL',
+          name: 'NexaOS Edu & Personal',
+          price: 'GRATUITO <span class="text-xs font-normal text-slate-300">/ para sempre</span>',
+          desc: 'Perfeito para estudantes, professores e uso doméstico diário, sem anúncios e sem custo de licença.',
+          benefits: [
+            '✅ Pacote completo NexaOffice + NexaCode + NexaStudio inclusos',
+            '✅ 100 GB de armazenamento gratuito na nuvem NexaCloud',
+            '✅ Atualizações de segurança vitalícias sem cobrar nada'
+          ]
+        },
+        gamers: {
+          img: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
+          caption: '🎮 Gamers & Criadores de Conteúdo',
+          tag: 'ASSINATURA OPCIONAL PRO',
+          name: 'NexaOS Gamer & Creator Pro',
+          price: 'R$ 19,90 <span class="text-xs font-normal text-slate-300">/ mês (Sistema grátis)</span>',
+          desc: 'O sistema operacional continua gratuito, com assinatura opcional para recursos de nuvem gamer e edição profissional.',
+          benefits: [
+            '✅ Modo Turbo Gamer + gravação de gameplay em 4K 120FPS sem perda de desempenho',
+            '✅ 2 TB na nuvem NexaCloud + acesso ao NexaCloud Gaming',
+            '✅ Ferramentas avançadas de renderização no NexaStudio'
+          ]
+        },
+        enterprise: {
+          img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=800&q=80',
+          caption: '🏢 Empresas, Escritórios & Governos',
+          tag: 'PLANO CORPORATIVO',
+          name: 'NexaOS Enterprise Security',
+          price: 'R$ 39,90 <span class="text-xs font-normal text-slate-300">/ dispositivo / mês</span>',
+          desc: 'Desenvolvido para equipes que exigem segurança máxima, gerenciamento remoto e suporte técnico especializado.',
+          benefits: [
+            '✅ Painel centralizado de TI para gerenciar centenas de computadores',
+            '✅ Criptografia quântica corporativa e backup automático por hora',
+            '✅ Suporte técnico dedicado 24 horas por dia, 7 dias por semana'
+          ]
+        }
+      };
+
+      const data = audiences[aud];
+      if (!data) return;
+
+      document.getElementById('audience-img').src = data.img;
+      document.getElementById('audience-img-caption').textContent = data.caption;
+      document.getElementById('plan-tag').textContent = data.tag;
+      document.getElementById('plan-name').textContent = data.name;
+      document.getElementById('plan-price').innerHTML = data.price;
+      document.getElementById('plan-desc').textContent = data.desc;
+      document.getElementById('plan-benefits').innerHTML = data.benefits.map(b => `<li>${b}</li>`).join('');
+
+      ['students', 'gamers', 'enterprise'].forEach(k => {
+        const btn = document.getElementById(`aud-btn-${k}`);
+        if (k === aud) {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition cursor-pointer';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer';
+        }
+      });
+    }
+
+    // ==================== COPIAR CÓDIGO-FONTE E NOTIFICAÇÕES ====================
+    function copyFullSourceCode() {
+      const codeText = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const tempArea = document.createElement('textarea');
+      tempArea.value = codeText;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('✅ Código-fonte completo do NexaOS copiado!');
+      } catch (err) {
+        showToast('Não foi possível copiar automaticamente.');
+      }
+      document.body.removeChild(tempArea);
+    }
+
+    let toastTimer;
+    function showToast(msg) {
+      const toast = document.getElementById('toast-box');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
   </script>
 </body>
 </html>
